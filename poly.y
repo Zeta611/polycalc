@@ -1,29 +1,44 @@
 %{
-#include <stdlib.h>
+#include <stdio.h>
 #include "poly.h"
-#define YYSTYPE double
 %}
 
-%token	NUM VAR
-%token	PLUS TIMES
-%token	LPAR RPAR
-%token	EOL
+%start	prgm
+
+%union {
+	double	num;
+	Node	*node;
+}
+
+%token	<num>	NUM
+%token		VAR
+%token		LPAR RPAR
+%token		EOL
+
+%type	<node>	expr
 
 %left	PLUS
 %left	TIMES
+
 %%
-prgm:	  /* nothing */
+
+prgm:	  // nothing
 	| prgm EOL
-	| prgm expr EOL
+	| prgm expr EOL	{
+		printf("VAL: %lf\n", eval_node($2));
+		printf("AST: ");
+		debug_node($2);
+		putchar('\n');
+		putchar('\n');
+		free_node($2); }
 	;
-expr:	  NUM
+expr:	  NUM	{ $$ = num_node($1); }
 	| VAR
-	| expr PLUS expr
-	| expr TIMES expr
-	| LPAR expr RPAR
+	| expr PLUS expr	{ $$ = op_node(SUM, $1, $3); }
+	| expr TIMES expr	{ $$ = op_node(MULT, $1, $3); }
+	| LPAR expr RPAR	{ $$ = $2; }
 	;
-%%	/* end of grammar */
-#include <stdio.h>
+%%
 
 char *progname;
 int lineno = 1;

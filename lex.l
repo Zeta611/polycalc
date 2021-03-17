@@ -3,6 +3,7 @@
 #include "poly.h"
 #include "y.tab.h"
 %}
+
 ws	[ \t]+
 
 ulph	[_a-zA-Z]
@@ -14,8 +15,9 @@ int	{digit}+
 pow	[eE][+-]?{int}
 real	(({int}\.?)|({digit}*\.{int})){pow}?
 %%
-{ws}	{ ; }	/* skip blanks and tabs */
-{real}	{ return NUM; }
+
+{ws}	{ ; }	// skip blanks and tabs
+{real}	{ sscanf(yytext, "%lf", &yylval.num); return NUM; }
 {var}	{ return VAR; }
 "+"	{ return PLUS; }
 "*"	{ return TIMES; }
