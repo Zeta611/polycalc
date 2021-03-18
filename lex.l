@@ -19,9 +19,6 @@ real	(({int}\.?)|({digit}*\.{int})){pow}?
 {ws}	{ ; }	// skip blanks and tabs
 {real}	{ sscanf(yytext, "%lf", &yylval.num); return NUM; }
 {var}	{ return VAR; }
-"+"	{ return PLUS; }
-"*"	{ return TIMES; }
-"("	{ return LPAR; }
-")"	{ return RPAR; }
-\n	{ ++lineno; return EOL; }
+[+*()]	{ return yytext[0]; }
+\n	{ ++lineno; return '\n'; }
 .	{ printf("unknown token %c\n", yytext[0]); }

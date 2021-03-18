@@ -25,9 +25,9 @@ double eval_node(Node *node)
 		double rval = eval_node(node->u.dat.right);
 
 		switch (op) {
-		case SUM:
+		case ADD:
 			return lval + rval;
-		case MULT:
+		case MUL:
 			return lval * rval;
 		default:
 			fprintf(stderr, "unknown op type %d\n", op);
@@ -64,10 +64,10 @@ void debug_node(Node *node)
 	case OP_NODE:
 		putchar('(');
 		switch (node->u.dat.op) {
-		case SUM:
+		case ADD:
 			putchar('+');
 			break;
-		case MULT:
+		case MUL:
 			putchar('*');
 			break;
 		default:

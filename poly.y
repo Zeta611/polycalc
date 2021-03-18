@@ -12,19 +12,17 @@
 
 %token	<num>	NUM
 %token		VAR
-%token		LPAR RPAR
-%token		EOL
 
 %type	<node>	expr
 
-%left	PLUS
-%left	TIMES
+%left	'+'
+%left	'*'
 
 %%
 
 prgm:	  // nothing
-	| prgm EOL
-	| prgm expr EOL	{
+	| prgm '\n'
+	| prgm expr '\n' {
 		printf("VAL: %lf\n", eval_node($2));
 		printf("AST: ");
 		debug_node($2);
@@ -34,9 +32,9 @@ prgm:	  // nothing
 	;
 expr:	  NUM	{ $$ = num_node($1); }
 	| VAR
-	| expr PLUS expr	{ $$ = op_node(SUM, $1, $3); }
-	| expr TIMES expr	{ $$ = op_node(MULT, $1, $3); }
-	| LPAR expr RPAR	{ $$ = $2; }
+	| expr '+' expr	{ $$ = op_node(ADD, $1, $3); }
+	| expr '*' expr	{ $$ = op_node(MUL, $1, $3); }
+	| '(' expr ')'	{ $$ = $2; }
 	;
 %%
 

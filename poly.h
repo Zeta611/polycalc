@@ -5,7 +5,7 @@ typedef struct Node {
 	enum { OP_NODE, NUM_NODE } type;
 	union {
 		struct {
-			enum Op { SUM, MULT } op;
+			enum Op { ADD, MUL } op;
 			struct Node *left, *right;
 		} dat; // OP_NODE
 		double num; // NUM_NODE
