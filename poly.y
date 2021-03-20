@@ -7,11 +7,12 @@
 
 %union {
 	double	num;
-	Node	*node;
+	char	*var;
+	ASTNode	*node;
 }
 
 %token	<num>	NUM
-%token		VAR
+%token	<var>	VAR
 
 %type	<node>	expr
 
@@ -23,15 +24,19 @@
 prgm:	  // nothing
 	| prgm '\n'
 	| prgm expr '\n' {
-		printf("VAL: %lf\n", eval_node($2));
 		printf("AST: ");
 		debug_node($2);
 		putchar('\n');
+		printf("VAL: ");
+		TermNode *p = eval_node($2);
+		print_poly(p);
+		free_poly(p);
+
 		putchar('\n');
 		free_node($2); }
 	;
 expr:	  NUM	{ $$ = num_node($1); }
-	| VAR
+	| VAR	{ $$ = var_node($1); }
 	| expr '+' expr	{ $$ = op_node(ADD, $1, $3); }
 	| expr '*' expr	{ $$ = op_node(MUL, $1, $3); }
 	| '(' expr ')'	{ $$ = $2; }
@@ -44,6 +49,7 @@ int lineno = 1;
 int main(int argc, char *argv[])
 {
 	progname = argv[0];
+	/* test(); */
 	yyparse();
 	return 0;
 }

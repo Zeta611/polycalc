@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include <string.h>
 #include "poly.h"
 #include "y.tab.h"
 %}
@@ -18,7 +19,10 @@ real	(({int}\.?)|({digit}*\.{int})){pow}?
 
 {ws}	{ ; }	// skip blanks and tabs
 {real}	{ sscanf(yytext, "%lf", &yylval.num); return NUM; }
-{var}	{ return VAR; }
+{var}	{
+	yylval.var = malloc(strlen(yytext) + 1);
+	strcpy(yylval.var, yytext);
+	return VAR; }
 [+*()]	{ return yytext[0]; }
 \n	{ ++lineno; return '\n'; }
 .	{ printf("unknown token %c\n", yytext[0]); }
