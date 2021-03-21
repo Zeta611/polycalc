@@ -8,7 +8,7 @@ typedef struct ASTNode {
 		struct {
 			enum Op { ADD, MUL } op;
 			struct ASTNode *left, *right;
-		} dat;      // OP_NODE
+		} dat; // OP_NODE
 		double val; // NUM_NODE
 		char *name; // VAR_NODE
 	} u;
@@ -37,7 +37,7 @@ typedef struct TermNode {
 	} hd;
 	union {
 		struct TermNode *vars; // COEFF_TERM
-		int pow;           // VAR_TERM
+		int pow; // VAR_TERM
 	} u;
 	struct TermNode *next;
 } TermNode;
@@ -54,8 +54,8 @@ ASTNode *var_node(char *name);
 // Release `node` and all its child nodes
 void free_node(ASTNode *node);
 
-// Generate an S-exp of the subtree under `node`
-void debug_node(const ASTNode *node);
+// Print an S-exp of the subtree under `node`
+void print_node(const ASTNode *node);
 
 // Return the resulting polynomial evaluating the subtree under `node`
 TermNode *eval_node(const ASTNode *node);

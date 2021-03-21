@@ -25,7 +25,7 @@ prgm:	  // nothing
 	| prgm '\n'
 	| prgm expr '\n' {
 		printf("AST: ");
-		debug_node($2);
+		print_node($2);
 		putchar('\n');
 		printf("VAL: ");
 		TermNode *p = eval_node($2);
