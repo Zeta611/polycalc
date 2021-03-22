@@ -1,8 +1,10 @@
 %{
 #include <stdio.h>
 #include <string.h>
-#include "poly.h"
 #include "y.tab.h"
+
+extern char *yytext;
+extern int lineno;
 %}
 
 ws	[ \t]+

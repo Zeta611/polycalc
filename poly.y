@@ -1,7 +1,11 @@
-%{
+%code top {
 #include <stdio.h>
-#include "poly.h"
-%}
+#include "term.h"
+}
+
+%code requires {
+#include "ast.h"
+}
 
 %start	prgm
 
