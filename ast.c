@@ -1,26 +1,33 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "ast.h"
 #include "term.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 ASTNode *op_node(enum Op op, ASTNode *left, ASTNode *right)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){ OP_NODE, .u.dat = { op, left, right } };
+	*node = (ASTNode){OP_NODE, .u.dat = {op, left, right}};
 	return node;
 }
 
-ASTNode *num_node(double val)
+ASTNode *inum_node(long val)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){ NUM_NODE, .u.val = val };
+	*node = (ASTNode){INUM_NODE, .u.ival = val};
+	return node;
+}
+
+ASTNode *rnum_node(double val)
+{
+	ASTNode *node = malloc(sizeof *node);
+	*node = (ASTNode){RNUM_NODE, .u.rval = val};
 	return node;
 }
 
 ASTNode *var_node(char *name)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){ VAR_NODE, .u.name = name };
+	*node = (ASTNode){VAR_NODE, .u.name = name};
 	return node;
 }
 
@@ -34,7 +41,8 @@ void free_node(ASTNode *node)
 		free_node(node->u.dat.left);
 		free_node(node->u.dat.right);
 		break;
-	case NUM_NODE:
+	case INUM_NODE:
+	case RNUM_NODE:
 		break;
 	case VAR_NODE:
 		free(node->u.name); // `u.name` was allocated in the lexer.
@@ -68,8 +76,11 @@ void print_node(const ASTNode *node)
 		print_node(node->u.dat.right);
 		putchar(')');
 		return;
-	case NUM_NODE:
-		printf("%lf", node->u.val);
+	case INUM_NODE:
+		printf("%ld", node->u.ival);
+		return;
+	case RNUM_NODE:
+		printf("%lf", node->u.rval);
 		return;
 	case VAR_NODE:
 		printf("%s", node->u.name);
@@ -100,10 +111,12 @@ TermNode *eval_node(const ASTNode *node)
 			abort();
 		}
 	}
-	case NUM_NODE:
-		return coeff_term(node->u.val);
+	case INUM_NODE:
+		return icoeff_term(node->u.ival);
+	case RNUM_NODE:
+		return rcoeff_term(node->u.rval);
 	case VAR_NODE: {
-		TermNode *ct = coeff_term(1);
+		TermNode *ct = icoeff_term(1);
 		TermNode *vt = var_term(node->u.name, 1);
 		ct->u.vars = vt;
 		return ct;

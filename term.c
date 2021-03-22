@@ -1,10 +1,12 @@
+#include "term.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "term.h"
 
 // Forward declarations for static functions
 static int var_cmp(const TermNode *t1, const TermNode *t2);
+static void add_coeff(TermNode *dest, const TermNode *src);
+static void mul_coeff(TermNode *dest, const TermNode *src);
 
 static TermNode *term_dup(const TermNode *t);
 static TermNode *var_dup(const TermNode *v);
@@ -15,10 +17,17 @@ static void mul_var(TermNode **dest, TermNode *src);
 static void free_term(TermNode *t);
 static void print_var(const TermNode *v);
 
-TermNode *coeff_term(double val)
+TermNode *icoeff_term(long val)
 {
 	TermNode *term = malloc(sizeof *term);
-	*term = (TermNode){ COEFF_TERM, .hd.val = val, .u.vars = NULL, NULL };
+	*term = (TermNode){ICOEFF_TERM, .hd.ival = val, .u.vars = NULL, NULL};
+	return term;
+}
+
+TermNode *rcoeff_term(double val)
+{
+	TermNode *term = malloc(sizeof *term);
+	*term = (TermNode){RCOEFF_TERM, .hd.rval = val, .u.vars = NULL, NULL};
 	return term;
 }
 
@@ -27,7 +36,7 @@ TermNode *var_term(char *name, int pow)
 	TermNode *term = malloc(sizeof *term);
 	char *s = malloc(strlen(name) + 1);
 	strcpy(s, name);
-	*term = (TermNode){ VAR_TERM, .hd.name = s, .u.pow = pow, NULL };
+	*term = (TermNode){VAR_TERM, .hd.name = s, .u.pow = pow, NULL};
 	return term;
 }
 
@@ -54,6 +63,74 @@ static int var_cmp(const TermNode *t1, const TermNode *t2)
 		return cmp;
 	}
 	return var_cmp(t1->next, t2->next);
+}
+
+static void add_coeff(TermNode *dest, const TermNode *src)
+{
+	switch (dest->type) {
+	case ICOEFF_TERM:
+		switch (src->type) {
+		case ICOEFF_TERM:
+			dest->hd.ival += src->hd.ival;
+			return;
+		case RCOEFF_TERM:
+			dest->type = RCOEFF_TERM;
+			dest->hd.rval = dest->hd.ival + src->hd.rval;
+			return;
+		default:
+			fprintf(stderr, "unexpected node type %d\n", src->type);
+			abort();
+		}
+	case RCOEFF_TERM:
+		switch (src->type) {
+		case ICOEFF_TERM:
+			dest->hd.rval += src->hd.ival;
+			return;
+		case RCOEFF_TERM:
+			dest->hd.rval += src->hd.rval;
+			return;
+		default:
+			fprintf(stderr, "unexpected node type %d\n", src->type);
+			abort();
+		}
+	default:
+		fprintf(stderr, "unexpected node type %d\n", dest->type);
+		abort();
+	}
+}
+
+static void mul_coeff(TermNode *dest, const TermNode *src)
+{
+	switch (dest->type) {
+	case ICOEFF_TERM:
+		switch (src->type) {
+		case ICOEFF_TERM:
+			dest->hd.ival *= src->hd.ival;
+			return;
+		case RCOEFF_TERM:
+			dest->type = RCOEFF_TERM;
+			dest->hd.rval = dest->hd.ival * src->hd.rval;
+			return;
+		default:
+			fprintf(stderr, "unexpected node type %d\n", src->type);
+			abort();
+		}
+	case RCOEFF_TERM:
+		switch (src->type) {
+		case ICOEFF_TERM:
+			dest->hd.rval *= src->hd.ival;
+			return;
+		case RCOEFF_TERM:
+			dest->hd.rval *= src->hd.rval;
+			return;
+		default:
+			fprintf(stderr, "unexpected node type %d\n", src->type);
+			abort();
+		}
+	default:
+		fprintf(stderr, "unexpected node type %d\n", dest->type);
+		abort();
+	}
 }
 
 // Add `src` to `dest`.
@@ -85,7 +162,7 @@ void add_poly(TermNode **dest, TermNode *src)
 			src = tmp;
 		} else {
 			// Increase the coefficient of `**p` and release `src`.
-			(*p)->hd.val += src->hd.val;
+			add_coeff(*p, src);
 			p = &(*p)->next;
 			TermNode *tmp = src;
 			src = src->next;
@@ -97,8 +174,10 @@ void add_poly(TermNode **dest, TermNode *src)
 static TermNode *term_dup(const TermNode *t)
 {
 	switch (t->type) {
-	case COEFF_TERM:
-		return coeff_term(t->hd.val);
+	case ICOEFF_TERM:
+		return icoeff_term(t->hd.ival);
+	case RCOEFF_TERM:
+		return rcoeff_term(t->hd.rval);
 	case VAR_TERM:
 		return var_term(t->hd.name, t->u.pow);
 	default:
@@ -192,7 +271,7 @@ void mul_poly(TermNode **dest, TermNode *src)
 		TermNode *svars = src->u.vars;
 		// Multiply a term `*src` to each of the terms in `*p`.
 		for (TermNode **tmp = p; *tmp; tmp = &(*tmp)->next) {
-			(*tmp)->hd.val *= src->hd.val;
+			mul_coeff(*tmp, src);
 			if (svars) {
 				mul_var(&(*tmp)->u.vars, var_dup(svars));
 			}
@@ -208,14 +287,16 @@ void mul_poly(TermNode **dest, TermNode *src)
 }
 
 // Release a single `COEFF_TERM` and/or all linked `VAR_TERM`s.
-// Does not recursively release `COEFF_TERM` terms. For that purpose, use `free_poly`.
+// Does not recursively release `COEFF_TERM` terms. For that purpose, use
+// `free_poly`.
 static void free_term(TermNode *t)
 {
 	if (!t) {
 		return;
 	}
 	switch (t->type) {
-	case COEFF_TERM:
+	case ICOEFF_TERM:
+	case RCOEFF_TERM:
 		free_term(t->u.vars);
 		break;
 	case VAR_TERM:
@@ -232,14 +313,25 @@ static void free_term(TermNode *t)
 static void print_var(const TermNode *v)
 {
 	for (; v; v = v->next) {
-		printf("%s^%d ", v->hd.name, v->u.pow);
+		int p = v->u.pow;
+		if (p == 1) {
+			printf("%s ", v->hd.name);
+		} else {
+			printf("%s^%d ", v->hd.name, p);
+		}
 	}
 }
 
 void print_poly(const TermNode *p)
 {
 	while (p) {
-		printf("%lf ", p->hd.val);
+		if (p->type == ICOEFF_TERM) {
+			if (p->hd.ival != 1 || !p->u.vars) {
+				printf("%ld ", p->hd.ival);
+			}
+		} else {
+			printf("%lf ", p->hd.rval);
+		}
 		print_var(p->u.vars);
 		p = p->next;
 		if (p) {
@@ -257,38 +349,4 @@ void free_poly(TermNode *p)
 	}
 	free_poly(p->next);
 	free_term(p);
-}
-
-void test(void)
-{
-	printf("TESTING\n");
-
-	// 2xy^2 + 5y + 9
-	TermNode *p1 = coeff_term(2);
-	p1->u.vars = var_term("x", 1);
-	p1->u.vars->next = var_term("y", 2);
-	p1->next = coeff_term(5);
-	p1->next->u.vars = var_term("y", 1);
-	p1->next->next = coeff_term(9);
-
-	// x^2 + 3xy^2 + x + 1
-	TermNode *p2 = coeff_term(1);
-	p2->u.vars = var_term("x", 2);
-	p2->next = coeff_term(3);
-	p2->next->u.vars = var_term("x", 1);
-	p2->next->u.vars->next = var_term("y", 2);
-	p2->next->next = coeff_term(1);
-	p2->next->next->u.vars = var_term("x", 1);
-	p2->next->next->next = coeff_term(1);
-
-	printf("P1: \n");
-	print_poly(p1);
-
-	printf("P2: \n");
-	print_poly(p2);
-
-	printf("P1 * P2: \n");
-	mul_poly(&p1, p2); // `p2` points to garbage henceforth.
-	print_poly(p1);
-	free_poly(p1);
 }

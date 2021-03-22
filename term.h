@@ -17,19 +17,22 @@
  *     +---+---+---+   +---+---+---+
  */
 typedef struct TermNode {
-	enum { COEFF_TERM, VAR_TERM } type;
+	enum { ICOEFF_TERM, RCOEFF_TERM, VAR_TERM } type;
 	union {
-		double val; // COEFF_TERM
-		char *name; // VAR_TERM
+		long ival;   // ICOEFF_TERM
+		double rval; // RCOEFF_TERM
+		char *name;  // VAR_TERM
 	} hd;
 	union {
-		struct TermNode *vars; // COEFF_TERM
-		int pow; // VAR_TERM
+		struct TermNode *vars; // I/RCOEFF_TERM
+		int pow;	       // VAR_TERM
 	} u;
 	struct TermNode *next;
 } TermNode;
 
-TermNode *coeff_term(double val);
+TermNode *icoeff_term(long val);
+
+TermNode *rcoeff_term(double val);
 
 TermNode *var_term(char *name, int pow);
 

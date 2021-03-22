@@ -20,7 +20,8 @@ real	(({int}\.?)|({digit}*\.{int})){pow}?
 %%
 
 {ws}	{ ; }	// skip blanks and tabs
-{real}	{ sscanf(yytext, "%lf", &yylval.num); return NUM; }
+{int}	{ sscanf(yytext, "%ld", &yylval.inum); return INUM; }
+{real}	{ sscanf(yytext, "%lf", &yylval.rnum); return RNUM; }
 {var}	{
 	yylval.var = malloc(strlen(yytext) + 1);
 	strcpy(yylval.var, yytext);
