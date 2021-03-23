@@ -11,7 +11,7 @@ ws	[ \t]+
 
 ulph	[_a-zA-Z]
 ulnum	[_a-zA-Z0-9]
-var	{ulph}{ulnum}*
+var	{ulph}|'{ulph}{ulnum}*
 
 digit	[0-9]
 int	{digit}+
@@ -23,8 +23,9 @@ real	(({int}\.?)|({digit}*\.{int})){pow}?
 {int}	{ sscanf(yytext, "%ld", &yylval.inum); return INUM; }
 {real}	{ sscanf(yytext, "%lf", &yylval.rnum); return RNUM; }
 {var}	{
-	yylval.var = malloc(strlen(yytext) + 1);
-	strcpy(yylval.var, yytext);
+	char *s = yytext[0] == '\'' ? yytext + 1 : yytext;
+	yylval.var = malloc(strlen(s) + 1);
+	strcpy(yylval.var, s);
 	return VAR; }
 [+*()]	{ return yytext[0]; }
 \n	{ ++lineno; return '\n'; }
