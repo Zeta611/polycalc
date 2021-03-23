@@ -56,20 +56,11 @@ void free_node(ASTNode *node)
 
 void print_node(const ASTNode *node)
 {
+	static char op_sym[] = {'+', '-', '*'};
 	switch (node->type) {
 	case OP_NODE:
 		putchar('(');
-		switch (node->u.dat.op) {
-		case ADD:
-			putchar('+');
-			break;
-		case MUL:
-			putchar('*');
-			break;
-		default:
-			fprintf(stderr, "unknown op type %d\n", node->u.dat.op);
-			abort();
-		}
+		putchar(op_sym[node->u.dat.op]);
 		putchar(' ');
 		print_node(node->u.dat.left);
 		putchar(' ');
@@ -102,6 +93,9 @@ TermNode *eval_node(const ASTNode *node)
 		switch (op) {
 		case ADD:
 			add_poly(&lt, rt);
+			return lt;
+		case SUB:
+			sub_poly(&lt, rt);
 			return lt;
 		case MUL:
 			mul_poly(&lt, rt);

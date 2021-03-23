@@ -27,6 +27,6 @@ real	(({int}\.?)|({digit}*\.{int})){pow}?
 	yylval.var = malloc(strlen(s) + 1);
 	strcpy(yylval.var, s);
 	return VAR; }
-[+*()]	{ return yytext[0]; }
+[-+*()]	{ return yytext[0]; }
 \n	{ ++lineno; return '\n'; }
 .	{ printf("unknown token %c\n", yytext[0]); }

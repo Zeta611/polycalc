@@ -171,6 +171,27 @@ void add_poly(TermNode **dest, TermNode *src)
 	}
 }
 
+// Subtract `src` to `dest`.
+// Argument passed to `src` must not be used after `sub_poly` is called.
+void sub_poly(TermNode **dest, TermNode *src)
+{
+	TermNode *cpy = src;
+	for (; src; src = src->next) {
+		switch (src->type) {
+		case ICOEFF_TERM:
+			src->hd.ival = -src->hd.ival;
+			break;
+		case RCOEFF_TERM:
+			src->hd.rval = -src->hd.rval;
+			break;
+		default:
+			fprintf(stderr, "unexpected node type %d\n", src->type);
+			abort();
+		}
+	}
+	add_poly(dest, cpy);
+}
+
 static TermNode *term_dup(const TermNode *t)
 {
 	switch (t->type) {

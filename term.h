@@ -40,6 +40,10 @@ TermNode *var_term(char *name, int pow);
 // Argument passed to `src` must not be used after `add_poly` is called.
 void add_poly(TermNode **dest, TermNode *src);
 
+// Subtract `src` to `dest`.
+// Argument passed to `src` must not be used after `sub_poly` is called.
+void sub_poly(TermNode **dest, TermNode *src);
+
 // Multiply `src` to `dest`.
 // Argument passed to `src` must not be used after `mul_poly` is called.
 void mul_poly(TermNode **dest, TermNode *src);
