@@ -8,6 +8,8 @@ static int var_cmp(const TermNode *t1, const TermNode *t2);
 static void add_coeff(TermNode *dest, const TermNode *src);
 static void mul_coeff(TermNode *dest, const TermNode *src);
 
+static void reduce0(TermNode **p);
+
 static TermNode *term_dup(const TermNode *t);
 static TermNode *var_dup(const TermNode *v);
 static TermNode *poly_dup(const TermNode *p);
@@ -133,6 +135,27 @@ static void mul_coeff(TermNode *dest, const TermNode *src)
 	}
 }
 
+// Remove zero-terms from `*p`. If `*p` is equivalent to 0, it reduces to a
+// single coefficient term of value 0.
+static void reduce0(TermNode **p)
+{
+	TermNode **cpy = p;
+	while (*p) {
+		if (((*p)->type == ICOEFF_TERM && (*p)->hd.ival == 0) ||
+		    ((*p)->type == RCOEFF_TERM && (*p)->hd.rval == 0)) {
+			TermNode *del = *p;
+			*p = del->next;
+			free_term(del);
+		} else {
+			p = &(*p)->next;
+		}
+	}
+	if (!*cpy) {
+		// `*p` was equivalent to 0, and every term has been removed.
+		*cpy = icoeff_term(0);
+	}
+}
+
 // Add `src` to `dest`.
 // This is essentially merging two linked lists.
 // Argument passed to `src` must not be used after `add_poly` is called.
@@ -149,7 +172,7 @@ void add_poly(TermNode **dest, TermNode *src)
 		if (!*p) {
 			// Link rest of `src` at the end.
 			*p = src;
-			return;
+			break;
 		}
 		int cmp = var_cmp((*p)->u.vars, src->u.vars);
 		if (cmp > 0) {
@@ -169,6 +192,7 @@ void add_poly(TermNode **dest, TermNode *src)
 			free_term(tmp);
 		}
 	}
+	reduce0(dest);
 }
 
 // Subtract `src` to `dest`.
@@ -190,6 +214,7 @@ void sub_poly(TermNode **dest, TermNode *src)
 		}
 	}
 	add_poly(dest, cpy);
+	/** reduce0(dest); */
 }
 
 static TermNode *term_dup(const TermNode *t)
@@ -291,10 +316,10 @@ void mul_poly(TermNode **dest, TermNode *src)
 		}
 		TermNode *svars = src->u.vars;
 		// Multiply a term `*src` to each of the terms in `*p`.
-		for (TermNode **tmp = p; *tmp; tmp = &(*tmp)->next) {
-			mul_coeff(*tmp, src);
+		for (TermNode **i = p; *i; i = &(*i)->next) {
+			mul_coeff(*i, src);
 			if (svars) {
-				mul_var(&(*tmp)->u.vars, var_dup(svars));
+				mul_var(&(*i)->u.vars, var_dup(svars));
 			}
 		}
 		if (p != dest) {
@@ -305,10 +330,11 @@ void mul_poly(TermNode **dest, TermNode *src)
 		src = src->next;
 		free_term(tmp);
 	}
+	reduce0(dest);
 }
 
 // Release a single `COEFF_TERM` and/or all linked `VAR_TERM`s.
-// Does not recursively release `COEFF_TERM` terms. For that purpose, use
+// Does not recursively release linked `COEFF_TERM` terms. For that purpose, use
 // `free_poly`.
 static void free_term(TermNode *t)
 {
