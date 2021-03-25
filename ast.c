@@ -56,7 +56,7 @@ void free_node(ASTNode *node)
 
 void print_node(const ASTNode *node)
 {
-	static char OP_SYM[] = {'+', '-', '*', '-'};
+	static char OP_SYM[] = {'+', '-', '*', '/', '^', '-'};
 	switch (node->type) {
 	case OP_NODE:
 		putchar('(');
@@ -104,6 +104,12 @@ TermNode *eval_node(const ASTNode *node)
 			return lt;
 		case MUL:
 			mul_poly(&lt, rt);
+			return lt;
+		case DIV:
+			div_poly(&lt, rt);
+			return lt;
+		case POW:
+			pow_poly(&lt, rt);
 			return lt;
 		case NEG:
 			neg_poly(&rt);

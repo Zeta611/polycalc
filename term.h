@@ -25,7 +25,7 @@ typedef struct TermNode {
 	} hd;
 	union {
 		struct TermNode *vars; // I/RCOEFF_TERM
-		int pow;	       // VAR_TERM
+		long pow;	       // VAR_TERM
 	} u;
 	struct TermNode *next;
 } TermNode;
@@ -34,7 +34,7 @@ TermNode *icoeff_term(long val);
 
 TermNode *rcoeff_term(double val);
 
-TermNode *var_term(char *name, int pow);
+TermNode *var_term(char *name, long pow);
 
 // Add `src` to `dest`.
 // Argument passed to `src` must not be used after `add_poly` is called.
@@ -47,6 +47,14 @@ void sub_poly(TermNode **dest, TermNode *src);
 // Multiply `src` to `dest`.
 // Argument passed to `src` must not be used after `mul_poly` is called.
 void mul_poly(TermNode **dest, TermNode *src);
+
+// Divide `src` to `dest`.
+// Argument passed to `src` must not be used after `div_poly` is called.
+void div_poly(TermNode **dest, TermNode *src);
+
+// Exponentiate `src` to `dest`.
+// Argument passed to `src` must not be used after `pow_poly` is called.
+void pow_poly(TermNode **dest, TermNode *src);
 
 // Negate `dest`.
 void neg_poly(TermNode **dest);

@@ -23,7 +23,8 @@
 %type	<node>	expr
 
 %left	'+' '-'
-%left	'*'
+%left	'*' '/'
+%left	'^'
 
 %%
 
@@ -47,6 +48,8 @@ expr:	  INUM	{ $$ = inum_node($1); }
 	| expr '+' expr	{ $$ = op_node(ADD, $1, $3); }
 	| expr '-' expr	{ $$ = op_node(SUB, $1, $3); }
 	| expr '*' expr	{ $$ = op_node(MUL, $1, $3); }
+	| expr '/' expr	{ $$ = op_node(DIV, $1, $3); }
+	| expr '^' expr	{ $$ = op_node(POW, $1, $3); }
 	| expr expr %prec '*'	{ $$ = op_node(MUL, $1, $2); }
 	| '-' expr	{ $$ = op_node(NEG, NULL, $2); }
 	| '(' expr ')'	{ $$ = $2; }

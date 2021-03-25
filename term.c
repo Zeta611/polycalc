@@ -33,7 +33,7 @@ TermNode *rcoeff_term(double val)
 	return term;
 }
 
-TermNode *var_term(char *name, int pow)
+TermNode *var_term(char *name, long pow)
 {
 	TermNode *term = malloc(sizeof *term);
 	char *s = malloc(strlen(name) + 1);
@@ -317,6 +317,68 @@ void mul_poly(TermNode **dest, TermNode *src)
 		free_term(tmp);
 	}
 	reduce0(dest);
+}
+
+// Divide `src` to `dest`.
+// Uses distributive law to multiply.
+// Argument passed to `src` must not be used after `div_poly` is called.
+void div_poly(TermNode **dest, TermNode *src)
+{
+	if (src->u.vars) {
+		printf("Division with a polynomial is not supported.");
+		free_poly(src);
+		return;
+	}
+	if (src->type == ICOEFF_TERM) {
+		if (src->hd.ival == 0) {
+			printf("Division by ZERO.");
+			free_poly(src);
+			return;
+		}
+		if (src->hd.ival != 1 && src->hd.ival != -1) {
+			src->type = RCOEFF_TERM;
+			src->hd.rval = 1. / src->hd.ival;
+		}
+	} else {
+		if (src->hd.rval == 0.) {
+			printf("Division by ZERO.");
+			free_poly(src);
+			return;
+		}
+		src->hd.rval = 1. / src->hd.rval;
+	}
+	mul_poly(dest, src);
+}
+
+// Exponentiate `src` to `dest`.
+// Uses distributive law to multiply.
+// Argument passed to `src` must not be used after `pow_poly` is called.
+void pow_poly(TermNode **dest, TermNode *src)
+{
+	if (src->u.vars) {
+		printf("Exponentiation with a polynomial is not supported.");
+		free_poly(src);
+		return;
+	}
+	if (src->type == RCOEFF_TERM) {
+		printf("Exponentiation with a floating point number is not "
+		       "supported.");
+		free_poly(src);
+		return;
+	}
+	long exp = src->hd.ival;
+	free_poly(src);
+	if (!exp) {
+		return;
+	}
+
+	// TODO: Use O(lg n) algorithm & check for overflow
+	TermNode *cpy = poly_dup(*dest);
+	while (--exp) {
+		TermNode *src = poly_dup(cpy);
+		mul_poly(dest, src);
+	}
+	free_poly(cpy);
 }
 
 // Negate `dest`.
