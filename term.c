@@ -199,22 +199,8 @@ void add_poly(TermNode **dest, TermNode *src)
 // Argument passed to `src` must not be used after `sub_poly` is called.
 void sub_poly(TermNode **dest, TermNode *src)
 {
-	TermNode *cpy = src;
-	for (; src; src = src->next) {
-		switch (src->type) {
-		case ICOEFF_TERM:
-			src->hd.ival = -src->hd.ival;
-			break;
-		case RCOEFF_TERM:
-			src->hd.rval = -src->hd.rval;
-			break;
-		default:
-			fprintf(stderr, "unexpected node type %d\n", src->type);
-			abort();
-		}
-	}
-	add_poly(dest, cpy);
-	/** reduce0(dest); */
+	neg_poly(&src);
+	add_poly(dest, src);
 }
 
 static TermNode *term_dup(const TermNode *t)
@@ -331,6 +317,24 @@ void mul_poly(TermNode **dest, TermNode *src)
 		free_term(tmp);
 	}
 	reduce0(dest);
+}
+
+// Negate `dest`.
+void neg_poly(TermNode **dest)
+{
+	for (TermNode *t = *dest; t; t = t->next) {
+		switch (t->type) {
+		case ICOEFF_TERM:
+			t->hd.ival = -t->hd.ival;
+			break;
+		case RCOEFF_TERM:
+			t->hd.rval = -t->hd.rval;
+			break;
+		default:
+			fprintf(stderr, "unexpected node type %d\n", t->type);
+			abort();
+		}
+	}
 }
 
 // Release a single `COEFF_TERM` and/or all linked `VAR_TERM`s.

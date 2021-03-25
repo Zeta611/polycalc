@@ -6,7 +6,7 @@ typedef struct ASTNode {
 	enum { OP_NODE, INUM_NODE, RNUM_NODE, VAR_NODE } type;
 	union {
 		struct {
-			enum Op { ADD, SUB, MUL } op;
+			enum Op { ADD, SUB, MUL, NEG } op;
 			struct ASTNode *left, *right;
 		} dat;	     // OP_NODE
 		long ival;   // INUM_NODE

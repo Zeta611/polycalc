@@ -56,13 +56,15 @@ void free_node(ASTNode *node)
 
 void print_node(const ASTNode *node)
 {
-	static char op_sym[] = {'+', '-', '*'};
+	static char OP_SYM[] = {'+', '-', '*', '-'};
 	switch (node->type) {
 	case OP_NODE:
 		putchar('(');
-		putchar(op_sym[node->u.dat.op]);
-		putchar(' ');
-		print_node(node->u.dat.left);
+		putchar(OP_SYM[node->u.dat.op]);
+		if (node->u.dat.op != NEG) {
+			putchar(' ');
+			print_node(node->u.dat.left);
+		}
 		putchar(' ');
 		print_node(node->u.dat.right);
 		putchar(')');
@@ -84,6 +86,9 @@ void print_node(const ASTNode *node)
 
 TermNode *eval_node(const ASTNode *node)
 {
+	if (!node) { // for NEG op
+		return NULL;
+	}
 	switch (node->type) {
 	case OP_NODE: {
 		enum Op op = node->u.dat.op;
@@ -100,6 +105,9 @@ TermNode *eval_node(const ASTNode *node)
 		case MUL:
 			mul_poly(&lt, rt);
 			return lt;
+		case NEG:
+			neg_poly(&rt);
+			return rt;
 		default:
 			fprintf(stderr, "unknown op type %d\n", op);
 			abort();

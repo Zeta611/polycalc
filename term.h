@@ -48,6 +48,9 @@ void sub_poly(TermNode **dest, TermNode *src);
 // Argument passed to `src` must not be used after `mul_poly` is called.
 void mul_poly(TermNode **dest, TermNode *src);
 
+// Negate `dest`.
+void neg_poly(TermNode **dest);
+
 // Print a polynomial pointed by `p`.
 void print_poly(const TermNode *p);
 
