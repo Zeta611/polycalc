@@ -112,7 +112,7 @@ TermNode *eval_node(const ASTNode *node)
 			pow_poly(&lt, rt);
 			return lt;
 		case NEG:
-			neg_poly(&rt);
+			neg_poly(rt);
 			return rt;
 		default:
 			fprintf(stderr, "unknown op type %d\n", op);

@@ -199,7 +199,7 @@ void add_poly(TermNode **dest, TermNode *src)
 // Argument passed to `src` must not be used after `sub_poly` is called.
 void sub_poly(TermNode **dest, TermNode *src)
 {
-	neg_poly(&src);
+	neg_poly(src);
 	add_poly(dest, src);
 }
 
@@ -382,18 +382,19 @@ void pow_poly(TermNode **dest, TermNode *src)
 }
 
 // Negate `dest`.
-void neg_poly(TermNode **dest)
+void neg_poly(TermNode *dest)
 {
-	for (TermNode *t = *dest; t; t = t->next) {
-		switch (t->type) {
+	for (; dest; dest = dest->next) {
+		switch (dest->type) {
 		case ICOEFF_TERM:
-			t->hd.ival = -t->hd.ival;
+			dest->hd.ival = -dest->hd.ival;
 			break;
 		case RCOEFF_TERM:
-			t->hd.rval = -t->hd.rval;
+			dest->hd.rval = -dest->hd.rval;
 			break;
 		default:
-			fprintf(stderr, "unexpected node type %d\n", t->type);
+			fprintf(stderr, "unexpected node type %d\n",
+				dest->type);
 			abort();
 		}
 	}
