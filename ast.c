@@ -34,7 +34,7 @@ ASTNode *var_node(char *name)
 void free_node(ASTNode *node)
 {
 	if (!node) {
-		return; // Simply here for defense--should never be reached.
+		return; // Left child of a `NEG` node is `NULL`.
 	}
 	switch (node->type) {
 	case OP_NODE:
@@ -56,7 +56,7 @@ void free_node(ASTNode *node)
 
 void print_node(const ASTNode *node)
 {
-	static char OP_SYM[] = {'+', '-', '*', '/', '^', '-'};
+	static const char OP_SYM[] = {'+', '-', '*', '/', '^', '-'};
 	switch (node->type) {
 	case OP_NODE:
 		putchar('(');

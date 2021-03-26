@@ -139,7 +139,7 @@ static void mul_coeff(TermNode *dest, const TermNode *src)
 // single coefficient term of value 0.
 static void reduce0(TermNode **p)
 {
-	TermNode **cpy = p;
+	TermNode **hd = p;
 	while (*p) {
 		if (((*p)->type == ICOEFF_TERM && (*p)->hd.ival == 0) ||
 		    ((*p)->type == RCOEFF_TERM && (*p)->hd.rval == 0)) {
@@ -150,9 +150,9 @@ static void reduce0(TermNode **p)
 			p = &(*p)->next;
 		}
 	}
-	if (!*cpy) {
+	if (!*hd) {
 		// `*p` was equivalent to 0, and every term has been removed.
-		*cpy = icoeff_term(0);
+		*hd = icoeff_term(0);
 	}
 }
 
@@ -220,25 +220,25 @@ static TermNode *term_dup(const TermNode *t)
 
 static TermNode *var_dup(const TermNode *v)
 {
-	TermNode *ret, **dup;
+	TermNode *hd, **dup;
 	dup = NULL;
-	for (ret = term_dup(v); v; v = v->next, dup = &(*dup)->next) {
+	for (hd = term_dup(v); v; v = v->next, dup = &(*dup)->next) {
 		if (!dup) {
-			dup = &ret;
+			dup = &hd;
 		} else {
 			*dup = term_dup(v);
 		}
 	}
-	return ret;
+	return hd;
 }
 
 static TermNode *poly_dup(const TermNode *p)
 {
-	TermNode *ret, **dup;
+	TermNode *hd, **dup;
 	dup = NULL;
-	for (ret = term_dup(p); p; p = p->next, dup = &(*dup)->next) {
+	for (hd = term_dup(p); p; p = p->next, dup = &(*dup)->next) {
 		if (!dup) {
-			dup = &ret;
+			dup = &hd;
 		} else {
 			*dup = term_dup(p);
 		}
@@ -248,7 +248,7 @@ static TermNode *poly_dup(const TermNode *p)
 			vdup = &(*vdup)->next;
 		}
 	}
-	return ret;
+	return hd;
 }
 
 // Multiply `src` to `dest`--both should point directly to `VAR_TERM`s.
@@ -289,7 +289,7 @@ static void mul_var(TermNode **dest, TermNode *src)
 void mul_poly(TermNode **dest, TermNode *src)
 {
 	// `dup` points to the head pointer initially, and then points to the
-	// copy of `*dest` afterwords (only if there are more than one terms
+	// copy of `*dest` afterwords (only if there are more than one term
 	// in `src` to apply distributive law).
 	// `dup` is there only to keep a pointer later to be assigned to `p`.
 	TermNode **dup, **p;
