@@ -8,6 +8,7 @@
 static int var_cmp(const TermNode *t1, const TermNode *t2);
 static void add_coeff(TermNode *dest, const TermNode *src);
 static void mul_coeff(TermNode *dest, const TermNode *src);
+static void div_coeff(TermNode *dest, const TermNode *src);
 
 static bool zero(TermNode *t);
 static void reduce0(TermNode **p);
@@ -137,10 +138,51 @@ static void mul_coeff(TermNode *dest, const TermNode *src)
 	}
 }
 
+// `src` should be guaranteed to contain a non-zero number.
+static void div_coeff(TermNode *dest, const TermNode *src)
+{
+	switch (dest->type) {
+	case ICOEFF_TERM:
+		switch (src->type) {
+		case ICOEFF_TERM:
+			if (dest->hd.ival % src->hd.ival) {
+				dest->type = RCOEFF_TERM;
+				dest->hd.rval =
+				    dest->hd.ival / (double)src->hd.ival;
+			} else {
+				dest->hd.ival /= src->hd.ival;
+			}
+			return;
+		case RCOEFF_TERM:
+			dest->type = RCOEFF_TERM;
+			dest->hd.rval = dest->hd.ival / src->hd.rval;
+			return;
+		default:
+			fprintf(stderr, "unexpected node type %d\n", src->type);
+			abort();
+		}
+	case RCOEFF_TERM:
+		switch (src->type) {
+		case ICOEFF_TERM:
+			dest->hd.rval /= src->hd.ival;
+			return;
+		case RCOEFF_TERM:
+			dest->hd.rval /= src->hd.rval;
+			return;
+		default:
+			fprintf(stderr, "unexpected node type %d\n", src->type);
+			abort();
+		}
+	default:
+		fprintf(stderr, "unexpected node type %d\n", dest->type);
+		abort();
+	}
+}
+
 static bool zero(TermNode *t)
 {
-	return t->type == ICOEFF_TERM && t->hd.ival == 0 ||
-	       t->type == RCOEFF_TERM && t->hd.rval == 0;
+	return (t->type == ICOEFF_TERM && t->hd.ival == 0) ||
+	       (t->type == RCOEFF_TERM && t->hd.rval == 0);
 }
 
 // Remove zero-terms from `*p`. If `*p` is equivalent to 0, it reduces to a
@@ -332,29 +374,18 @@ void mul_poly(TermNode **dest, TermNode *src)
 void div_poly(TermNode **dest, TermNode *src)
 {
 	if (src->u.vars) {
-		printf("Division with a polynomial is not supported.");
-		free_poly(src);
-		return;
+		printf("Division by a polynomial is not supported.\n");
+		goto src_cleanup;
 	}
-	if (src->type == ICOEFF_TERM) {
-		if (src->hd.ival == 0) {
-			printf("Division by ZERO.");
-			free_poly(src);
-			return;
-		}
-		if (src->hd.ival != 1 && src->hd.ival != -1) {
-			src->type = RCOEFF_TERM;
-			src->hd.rval = 1. / src->hd.ival;
-		}
-	} else {
-		if (src->hd.rval == 0.) {
-			printf("Division by ZERO.");
-			free_poly(src);
-			return;
-		}
-		src->hd.rval = 1. / src->hd.rval;
+	if (zero(src)) {
+		printf("Division by ZERO.\n");
+		goto src_cleanup;
 	}
-	mul_poly(dest, src);
+	for (; *dest; dest = &(*dest)->next) {
+		div_coeff(*dest, src);
+	}
+src_cleanup:
+	free_poly(src);
 }
 
 // Exponentiate `src` to `dest`.
@@ -363,13 +394,13 @@ void div_poly(TermNode **dest, TermNode *src)
 void pow_poly(TermNode **dest, TermNode *src)
 {
 	if (src->u.vars) {
-		printf("Exponentiation with a polynomial is not supported.");
+		printf("Exponentiation with a polynomial is not supported.\n");
 		free_poly(src);
 		return;
 	}
 	if (src->type == RCOEFF_TERM) {
 		printf("Exponentiation with a floating point number is not "
-		       "supported.");
+		       "supported.\n");
 		free_poly(src);
 		return;
 	}
