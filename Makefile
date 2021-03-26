@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -O0 -Wall -Wextra -Wpedantic -std=c17
 YFLAGS = -d
-LDFLAGS = -ly -ll
+LDFLAGS = -ly -ll -lm
 OBJS = poly.o lex.o ast.o term.o
 
 poly:	$(OBJS)

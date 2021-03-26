@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <tgmath.h>
 
 // Forward declarations for static functions
 static int var_cmp(const TermNode *t1, const TermNode *t2);
@@ -18,6 +19,9 @@ static TermNode *var_dup(const TermNode *v);
 static TermNode *poly_dup(const TermNode *p);
 
 static void mul_var(TermNode **dest, TermNode *src);
+
+static void pow_num(TermNode **dest, TermNode *src);
+static void ipow_poly(TermNode **dest, long exp);
 
 static void free_term(TermNode *t);
 static void print_var(const TermNode *v);
@@ -388,6 +392,65 @@ src_cleanup:
 	free_poly(src);
 }
 
+// Both `*dest` and `src` should be number terms.
+static void pow_num(TermNode **dest, TermNode *src)
+{
+	switch ((*dest)->type) {
+	case ICOEFF_TERM:
+		switch (src->type) {
+		case ICOEFF_TERM:
+			if (src->hd.ival < 0) {
+				(*dest)->type = RCOEFF_TERM;
+				(*dest)->hd.rval =
+				    pow((*dest)->hd.ival, src->hd.ival);
+			} else {
+				(*dest)->hd.ival =
+				    pow((*dest)->hd.ival, src->hd.ival);
+			}
+			return;
+		case RCOEFF_TERM:
+			(*dest)->type = RCOEFF_TERM;
+			(*dest)->hd.rval = pow((*dest)->hd.ival, src->hd.rval);
+			return;
+		default:
+			fprintf(stderr, "unexpected node type %d\n", src->type);
+			abort();
+		}
+	case RCOEFF_TERM:
+		switch (src->type) {
+		case ICOEFF_TERM:
+			(*dest)->hd.rval = pow((*dest)->hd.rval, src->hd.ival);
+			return;
+		case RCOEFF_TERM:
+			(*dest)->hd.rval = pow((*dest)->hd.rval, src->hd.rval);
+			return;
+		default:
+			fprintf(stderr, "unexpected node type %d\n", src->type);
+			abort();
+		}
+	default:
+		fprintf(stderr, "unexpected node type %d\n", (*dest)->type);
+		abort();
+	}
+}
+
+// `exp` should be a positive integer.
+static void ipow_poly(TermNode **dest, long exp)
+{
+	if (exp < 2) {
+		return;
+	}
+	TermNode *dup;
+	if (exp % 2) {
+		dup = poly_dup(*dest);
+		ipow_poly(dest, exp - 1);
+	} else {
+		ipow_poly(dest, exp / 2);
+		dup = poly_dup(*dest);
+	}
+	mul_poly(dest, dup);
+}
+
 // Exponentiate `src` to `dest`.
 // Uses distributive law to multiply.
 // Argument passed to `src` must not be used after `pow_poly` is called.
@@ -395,28 +458,31 @@ void pow_poly(TermNode **dest, TermNode *src)
 {
 	if (src->u.vars) {
 		printf("Exponentiation with a polynomial is not supported.\n");
-		free_poly(src);
-		return;
+		goto src_cleanup;
+	}
+	if (!(*dest)->u.vars) { // `*dest` is a number term.
+		pow_num(dest, src);
+		goto src_cleanup;
 	}
 	if (src->type == RCOEFF_TERM) {
-		printf("Exponentiation with a floating point number is not "
-		       "supported.\n");
-		free_poly(src);
-		return;
-	}
-	long exp = src->hd.ival;
-	free_poly(src);
-	if (!exp) {
-		return;
+		printf("Exponentiation with a polynomial and a real number is "
+		       "not supported.\n");
+		goto src_cleanup;
 	}
 
-	// TODO: Use O(lg n) algorithm & check for overflow
-	TermNode *cpy = poly_dup(*dest);
-	while (--exp) {
-		TermNode *src = poly_dup(cpy);
-		mul_poly(dest, src);
+	long exp = src->hd.ival;
+	if (exp < 0) {
+		printf("Exponentiation with a polynomial and a negative "
+		       "integer is not supported.\n");
+	} else if (exp == 0) {
+		TermNode *tmp = *dest;
+		*dest = icoeff_term(1);
+		free_poly(tmp);
+	} else {
+		ipow_poly(dest, exp);
 	}
-	free_poly(cpy);
+src_cleanup:
+	free_poly(src);
 }
 
 // Negate `dest`.
