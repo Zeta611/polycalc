@@ -373,7 +373,6 @@ void mul_poly(TermNode **dest, TermNode *src)
 }
 
 // Divide `src` to `dest`.
-// Uses distributive law to multiply.
 // Argument passed to `src` must not be used after `div_poly` is called.
 void div_poly(TermNode **dest, TermNode *src)
 {
@@ -452,7 +451,6 @@ static void ipow_poly(TermNode **dest, long exp)
 }
 
 // Exponentiate `src` to `dest`.
-// Uses distributive law to multiply.
 // Argument passed to `src` must not be used after `pow_poly` is called.
 void pow_poly(TermNode **dest, TermNode *src)
 {
