@@ -1,4 +1,5 @@
 #include "term.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +9,7 @@ static int var_cmp(const TermNode *t1, const TermNode *t2);
 static void add_coeff(TermNode *dest, const TermNode *src);
 static void mul_coeff(TermNode *dest, const TermNode *src);
 
+static bool zero(TermNode *t);
 static void reduce0(TermNode **p);
 
 static TermNode *term_dup(const TermNode *t);
@@ -135,14 +137,19 @@ static void mul_coeff(TermNode *dest, const TermNode *src)
 	}
 }
 
+static bool zero(TermNode *t)
+{
+	return t->type == ICOEFF_TERM && t->hd.ival == 0 ||
+	       t->type == RCOEFF_TERM && t->hd.rval == 0;
+}
+
 // Remove zero-terms from `*p`. If `*p` is equivalent to 0, it reduces to a
 // single coefficient term of value 0.
 static void reduce0(TermNode **p)
 {
 	TermNode **hd = p;
 	while (*p) {
-		if (((*p)->type == ICOEFF_TERM && (*p)->hd.ival == 0) ||
-		    ((*p)->type == RCOEFF_TERM && (*p)->hd.rval == 0)) {
+		if (zero(*p)) {
 			TermNode *del = *p;
 			*p = del->next;
 			free_term(del);
