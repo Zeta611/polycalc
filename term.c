@@ -214,7 +214,7 @@ static void reduce0(TermNode **p)
 // Argument passed to `src` must not be used after `add_poly` is called.
 // `TermNode`s composing the polynomial represented by `src` are either rewired
 // to `dest` accordingly or completely released from memory.
-void add_poly(TermNode **dest, TermNode *src)
+bool add_poly(TermNode **dest, TermNode *src)
 {
 	// `*p` is the head pointer initially; `next` of a `TermNode`, if
 	// traversed.
@@ -246,14 +246,16 @@ void add_poly(TermNode **dest, TermNode *src)
 		}
 	}
 	reduce0(dest);
+	return true;
 }
 
 // Subtract `src` to `dest`.
 // Argument passed to `src` must not be used after `sub_poly` is called.
-void sub_poly(TermNode **dest, TermNode *src)
+bool sub_poly(TermNode **dest, TermNode *src)
 {
 	neg_poly(src);
 	add_poly(dest, src);
+	return true;
 }
 
 static TermNode *term_dup(const TermNode *t)
@@ -339,7 +341,7 @@ static void mul_var(TermNode **dest, TermNode *src)
 // Multiply `src` to `dest`.
 // Uses distributive law to multiply.
 // Argument passed to `src` must not be used after `mul_poly` is called.
-void mul_poly(TermNode **dest, TermNode *src)
+bool mul_poly(TermNode **dest, TermNode *src)
 {
 	// `dup` points to the head pointer initially, and then points to the
 	// copy of `*dest` afterwords (only if there are more than one term
@@ -370,18 +372,22 @@ void mul_poly(TermNode **dest, TermNode *src)
 		free_term(tmp);
 	}
 	reduce0(dest);
+	return true;
 }
 
 // Divide `src` to `dest`.
 // Argument passed to `src` must not be used after `div_poly` is called.
-void div_poly(TermNode **dest, TermNode *src)
+bool div_poly(TermNode **dest, TermNode *src)
 {
+	bool success = true;
 	if (src->u.vars) {
 		printf("Division by a polynomial is not supported.\n");
+		success = false;
 		goto src_cleanup;
 	}
 	if (zero(src)) {
 		printf("Division by ZERO.\n");
+		success = false;
 		goto src_cleanup;
 	}
 	for (; *dest; dest = &(*dest)->next) {
@@ -389,6 +395,7 @@ void div_poly(TermNode **dest, TermNode *src)
 	}
 src_cleanup:
 	free_poly(src);
+	return success;
 }
 
 // Both `*dest` and `src` should be number terms.
@@ -452,10 +459,12 @@ static void ipow_poly(TermNode **dest, long exp)
 
 // Exponentiate `src` to `dest`.
 // Argument passed to `src` must not be used after `pow_poly` is called.
-void pow_poly(TermNode **dest, TermNode *src)
+bool pow_poly(TermNode **dest, TermNode *src)
 {
+	bool success = true;
 	if (src->u.vars) {
 		printf("Exponentiation with a polynomial is not supported.\n");
+		success = false;
 		goto src_cleanup;
 	}
 	if (!(*dest)->u.vars) { // `*dest` is a number term.
@@ -465,6 +474,7 @@ void pow_poly(TermNode **dest, TermNode *src)
 	if (src->type == RCOEFF_TERM) {
 		printf("Exponentiation with a polynomial and a real number is "
 		       "not supported.\n");
+		success = false;
 		goto src_cleanup;
 	}
 
@@ -472,6 +482,7 @@ void pow_poly(TermNode **dest, TermNode *src)
 	if (exp < 0) {
 		printf("Exponentiation with a polynomial and a negative "
 		       "integer is not supported.\n");
+		success = false;
 	} else if (exp == 0) {
 		TermNode *tmp = *dest;
 		*dest = icoeff_term(1);
@@ -481,10 +492,11 @@ void pow_poly(TermNode **dest, TermNode *src)
 	}
 src_cleanup:
 	free_poly(src);
+	return success;
 }
 
 // Negate `dest`.
-void neg_poly(TermNode *dest)
+bool neg_poly(TermNode *dest)
 {
 	for (; dest; dest = dest->next) {
 		switch (dest->type) {
@@ -500,6 +512,7 @@ void neg_poly(TermNode *dest)
 			abort();
 		}
 	}
+	return true;
 }
 
 // Release a single `COEFF_TERM` and/or all linked `VAR_TERM`s.

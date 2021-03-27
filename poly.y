@@ -34,11 +34,12 @@ prgm:	  // nothing
 		printf("AST: ");
 		print_node($2);
 		putchar('\n');
-		printf("VAL: ");
-		TermNode *p = eval_node($2);
-		print_poly(p);
-		free_poly(p);
-
+		TermNode *p;
+		if ((p = eval_node($2))) {
+			printf("VAL: ");
+			print_poly(p);
+			free_poly(p);
+		}
 		putchar('\n');
 		free_node($2); }
 	;
@@ -51,7 +52,7 @@ expr:	  INUM	{ $$ = inum_node($1); }
 	| expr '/' expr	{ $$ = op_node(DIV, $1, $3); }
 	| expr '^' expr	{ $$ = op_node(POW, $1, $3); }
 	| expr expr %prec '*'	{ $$ = op_node(MUL, $1, $2); }
-	| '-' expr	{ $$ = op_node(NEG, NULL, $2); }
+	| '-' expr	{ $$ = op_node(NEG, $2, NULL); }
 	| '(' expr ')'	{ $$ = $2; }
 	;
 %%

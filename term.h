@@ -1,6 +1,8 @@
 #ifndef TERM_H
 #define TERM_H
 
+#include <stdbool.h>
+
 /* Diagram of the representation for 2xy^2 + 5y + 9 using `TermNode`s
  *
  *  hd   u  next
@@ -38,26 +40,26 @@ TermNode *var_term(char *name, long pow);
 
 // Add `src` to `dest`.
 // Argument passed to `src` must not be used after `add_poly` is called.
-void add_poly(TermNode **dest, TermNode *src);
+bool add_poly(TermNode **dest, TermNode *src);
 
 // Subtract `src` to `dest`.
 // Argument passed to `src` must not be used after `sub_poly` is called.
-void sub_poly(TermNode **dest, TermNode *src);
+bool sub_poly(TermNode **dest, TermNode *src);
 
 // Multiply `src` to `dest`.
 // Argument passed to `src` must not be used after `mul_poly` is called.
-void mul_poly(TermNode **dest, TermNode *src);
+bool mul_poly(TermNode **dest, TermNode *src);
 
 // Divide `src` to `dest`.
 // Argument passed to `src` must not be used after `div_poly` is called.
-void div_poly(TermNode **dest, TermNode *src);
+bool div_poly(TermNode **dest, TermNode *src);
 
 // Exponentiate `src` to `dest`.
 // Argument passed to `src` must not be used after `pow_poly` is called.
-void pow_poly(TermNode **dest, TermNode *src);
+bool pow_poly(TermNode **dest, TermNode *src);
 
 // Negate `dest`.
-void neg_poly(TermNode *dest);
+bool neg_poly(TermNode *dest);
 
 // Print a polynomial pointed by `p`.
 void print_poly(const TermNode *p);

@@ -34,7 +34,7 @@ ASTNode *var_node(char *name)
 void free_node(ASTNode *node)
 {
 	if (!node) {
-		return; // Left child of a `NEG` node is `NULL`.
+		return; // Right child of a `NEG` node is `NULL`.
 	}
 	switch (node->type) {
 	case OP_NODE:
@@ -61,12 +61,12 @@ void print_node(const ASTNode *node)
 	case OP_NODE:
 		putchar('(');
 		putchar(OP_SYM[node->u.dat.op]);
+		putchar(' ');
+		print_node(node->u.dat.left);
 		if (node->u.dat.op != NEG) {
 			putchar(' ');
-			print_node(node->u.dat.left);
+			print_node(node->u.dat.right);
 		}
-		putchar(' ');
-		print_node(node->u.dat.right);
 		putchar(')');
 		return;
 	case INUM_NODE:
@@ -95,29 +95,44 @@ TermNode *eval_node(const ASTNode *node)
 		TermNode *lt = eval_node(node->u.dat.left);
 		TermNode *rt = eval_node(node->u.dat.right);
 
+		// Result of `eval_node` being `NULL` indicates an invalid
+		// syntax or an operation, except for the result of evaluating
+		// the right child of the `NEG` op.
+		if (!lt || (!rt && op != NEG)) {
+			free_poly(lt);
+			free_poly(rt);
+			return NULL;
+		}
+
+		bool success;
 		switch (op) {
 		case ADD:
-			add_poly(&lt, rt);
-			return lt;
+			success = add_poly(&lt, rt);
+			break;
 		case SUB:
-			sub_poly(&lt, rt);
-			return lt;
+			success = sub_poly(&lt, rt);
+			break;
 		case MUL:
-			mul_poly(&lt, rt);
-			return lt;
+			success = mul_poly(&lt, rt);
+			break;
 		case DIV:
-			div_poly(&lt, rt);
-			return lt;
+			success = div_poly(&lt, rt);
+			break;
 		case POW:
-			pow_poly(&lt, rt);
-			return lt;
+			success = pow_poly(&lt, rt);
+			break;
 		case NEG:
-			neg_poly(rt);
-			return rt;
+			success = neg_poly(lt);
+			break;
 		default:
 			fprintf(stderr, "unknown op type %d\n", op);
 			abort();
 		}
+		if (!success) {
+			free_poly(lt);
+			return NULL;
+		}
+		return lt;
 	}
 	case INUM_NODE:
 		return icoeff_term(node->u.ival);
