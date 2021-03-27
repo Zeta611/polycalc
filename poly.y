@@ -5,6 +5,7 @@
 
 %code requires {
 #include "ast.h"
+#include "rel.h"
 }
 
 %start	prgm
@@ -13,14 +14,16 @@
 	long	inum;
 	double	rnum;
 	char	*var;
+	Rel	rel;
 	ASTNode	*node;
 }
 
 %token	<rnum>	RNUM
 %token	<inum>	INUM
 %token	<var>	VAR
+%token	<rel>	REL
 
-%type	<node>	expr
+%type	<node>	poly expr
 
 %left	'+' '-'
 %left	'*' '/'
@@ -34,26 +37,40 @@ prgm:	  // nothing
 		printf("AST: ");
 		print_node($2);
 		putchar('\n');
-		TermNode *p;
-		if ((p = eval_node($2))) {
-			printf("VAL: ");
-			print_poly(p);
-			free_poly(p);
+		if ($2->type == REL_NODE) {
+			RelNode *r;
+			if ((r = eval_rel($2))) {
+				printf("REL: ");
+				print_rel(r);
+				putchar('\n');
+				free_rel(r);
+			}
+		} else {
+			TermNode *p;
+			if ((p = eval_poly($2))) {
+				printf("VAL: ");
+				print_poly(p);
+				putchar('\n');
+				free_poly(p);
+			}
 		}
 		putchar('\n');
 		free_node($2); }
 	;
-expr:	  INUM	{ $$ = inum_node($1); }
+expr:	  poly
+	| poly REL poly	{ $$ = rel_node($2, $1, $3); }
+	;
+poly:	  INUM	{ $$ = inum_node($1); }
 	| RNUM	{ $$ = rnum_node($1); }
 	| VAR	{ $$ = var_node($1); }
-	| expr '+' expr	{ $$ = op_node(ADD, $1, $3); }
-	| expr '-' expr	{ $$ = op_node(SUB, $1, $3); }
-	| expr '*' expr	{ $$ = op_node(MUL, $1, $3); }
-	| expr '/' expr	{ $$ = op_node(DIV, $1, $3); }
-	| expr '^' expr	{ $$ = op_node(POW, $1, $3); }
-	| expr expr %prec '*'	{ $$ = op_node(MUL, $1, $2); }
-	| '-' expr	{ $$ = op_node(NEG, $2, NULL); }
-	| '(' expr ')'	{ $$ = $2; }
+	| poly '+' poly	{ $$ = op_node(ADD, $1, $3); }
+	| poly '-' poly	{ $$ = op_node(SUB, $1, $3); }
+	| poly '*' poly	{ $$ = op_node(MUL, $1, $3); }
+	| poly '/' poly	{ $$ = op_node(DIV, $1, $3); }
+	| poly '^' poly	{ $$ = op_node(POW, $1, $3); }
+	| poly poly %prec '*'	{ $$ = op_node(MUL, $1, $2); }
+	| '-' poly	{ $$ = op_node(NEG, $2, NULL); }
+	| '(' poly ')'	{ $$ = $2; }
 	;
 %%
 

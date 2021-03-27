@@ -1,12 +1,20 @@
 #include "ast.h"
+#include "rel.h"
 #include "term.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-ASTNode *op_node(enum Op op, ASTNode *left, ASTNode *right)
+ASTNode *rel_node(Rel rel, ASTNode *left, ASTNode *right)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){OP_NODE, .u.dat = {op, left, right}};
+	*node = (ASTNode){REL_NODE, .u.reldat = {rel, left, right}};
+	return node;
+}
+
+ASTNode *op_node(Op op, ASTNode *left, ASTNode *right)
+{
+	ASTNode *node = malloc(sizeof *node);
+	*node = (ASTNode){OP_NODE, .u.opdat = {op, left, right}};
 	return node;
 }
 
@@ -37,9 +45,13 @@ void free_node(ASTNode *node)
 		return; // Right child of a `NEG` node is `NULL`.
 	}
 	switch (node->type) {
+	case REL_NODE:
+		free_node(node->u.reldat.left);
+		free_node(node->u.reldat.right);
+		break;
 	case OP_NODE:
-		free_node(node->u.dat.left);
-		free_node(node->u.dat.right);
+		free_node(node->u.opdat.left);
+		free_node(node->u.opdat.right);
 		break;
 	case INUM_NODE:
 	case RNUM_NODE:
@@ -57,15 +69,22 @@ void free_node(ASTNode *node)
 void print_node(const ASTNode *node)
 {
 	static const char OP_SYM[] = {'+', '-', '*', '/', '^', '-'};
+	static const char REL_SYM[][3] = {"=", ">", ">=", "<", "<="};
+
 	switch (node->type) {
-	case OP_NODE:
-		putchar('(');
-		putchar(OP_SYM[node->u.dat.op]);
+	case REL_NODE:
+		printf("(%s ", REL_SYM[node->u.reldat.rel]);
+		print_node(node->u.opdat.left);
 		putchar(' ');
-		print_node(node->u.dat.left);
-		if (node->u.dat.op != NEG) {
+		print_node(node->u.opdat.right);
+		putchar(')');
+		return;
+	case OP_NODE:
+		printf("(%c ", OP_SYM[node->u.opdat.op]);
+		print_node(node->u.opdat.left);
+		if (node->u.opdat.op != NEG) {
 			putchar(' ');
-			print_node(node->u.dat.right);
+			print_node(node->u.opdat.right);
 		}
 		putchar(')');
 		return;
@@ -84,18 +103,19 @@ void print_node(const ASTNode *node)
 	}
 }
 
-TermNode *eval_node(const ASTNode *node)
+// Return the resulting polynomial evaluating the subtree under `node`
+TermNode *eval_poly(const ASTNode *node)
 {
 	if (!node) { // for NEG op
 		return NULL;
 	}
 	switch (node->type) {
 	case OP_NODE: {
-		enum Op op = node->u.dat.op;
-		TermNode *lt = eval_node(node->u.dat.left);
-		TermNode *rt = eval_node(node->u.dat.right);
+		Op op = node->u.opdat.op;
+		TermNode *lt = eval_poly(node->u.opdat.left);
+		TermNode *rt = eval_poly(node->u.opdat.right);
 
-		// Result of `eval_node` being `NULL` indicates an invalid
+		// Result of `eval_poly` being `NULL` indicates an invalid
 		// syntax or an operation, except for the result of evaluating
 		// the right child of the `NEG` op.
 		if (!lt || (!rt && op != NEG)) {
@@ -147,5 +167,20 @@ TermNode *eval_node(const ASTNode *node)
 	default:
 		fprintf(stderr, "unexpected node type %d\n", node->type);
 		abort();
+	}
+}
+
+// Return the resulting relation evaluating the subtree under `node`
+RelNode *eval_rel(const ASTNode *node)
+{
+	TermNode *left = eval_poly(node->u.reldat.left);
+	TermNode *right = eval_poly(node->u.reldat.right);
+	if (sub_poly(&left, right)) {
+		RelNode *rnode = malloc(sizeof *rnode);
+		*rnode = (RelNode){node->u.reldat.rel, left, icoeff_term(0)};
+		return rnode;
+	} else {
+		free_poly(left);
+		return NULL;
 	}
 }

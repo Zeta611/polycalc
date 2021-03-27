@@ -17,6 +17,10 @@ digit	[0-9]
 int	{digit}+
 pow	[eE][+-]?{int}
 real	(({int}\.?)|({digit}*\.{int})){pow}?
+
+op	[-+*/^]
+par	[()]
+rel	[<>]=?|=
 %%
 
 {ws}	{ ; }	// skip blanks and tabs
@@ -27,6 +31,22 @@ real	(({int}\.?)|({digit}*\.{int})){pow}?
 	yylval.var = malloc(strlen(s) + 1);
 	strcpy(yylval.var, s);
 	return VAR; }
-[-+*/^()]	{ return yytext[0]; }
+{op}	{ return yytext[0]; }
+{par}	{ return yytext[0]; }
+{rel}	{
+	switch (yytext[0]) {
+	case '=':
+		yylval.rel = EQ;
+		break;
+	case '>':
+		yylval.rel = yytext[1] ? GE : GT;
+		break;
+	case '<':
+		yylval.rel = yytext[1] ? LE : LT;
+		break;
+	default: // can not be reached
+		break;
+	}
+	return REL; }
 \n	{ ++lineno; return '\n'; }
 .	{ printf("unknown token %c\n", yytext[0]); }

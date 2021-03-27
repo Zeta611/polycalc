@@ -551,6 +551,7 @@ static void print_var(const TermNode *v)
 	}
 }
 
+// Print a polynomial pointed by `p`.
 void print_poly(const TermNode *p)
 {
 	while (p) {
@@ -567,7 +568,6 @@ void print_poly(const TermNode *p)
 			printf("+ ");
 		}
 	}
-	putchar('\n');
 }
 
 // Release a polynomial, i.e., `COEFF_TERM` typed `TermNode` linked together.
