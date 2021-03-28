@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Allocate and initialize a `REL_NODE` type node.
 ASTNode *rel_node(Rel rel, ASTNode *left, ASTNode *right)
 {
 	ASTNode *node = malloc(sizeof *node);
@@ -11,6 +12,7 @@ ASTNode *rel_node(Rel rel, ASTNode *left, ASTNode *right)
 	return node;
 }
 
+// Allocate and initialize an `OP_NODE` type node.
 ASTNode *op_node(Op op, ASTNode *left, ASTNode *right)
 {
 	ASTNode *node = malloc(sizeof *node);
@@ -18,6 +20,7 @@ ASTNode *op_node(Op op, ASTNode *left, ASTNode *right)
 	return node;
 }
 
+// Allocate and initialize a `INUM_NODE` type node.
 ASTNode *inum_node(long val)
 {
 	ASTNode *node = malloc(sizeof *node);
@@ -25,6 +28,7 @@ ASTNode *inum_node(long val)
 	return node;
 }
 
+// Allocate and initialize a `RNUM_NODE` type node.
 ASTNode *rnum_node(double val)
 {
 	ASTNode *node = malloc(sizeof *node);
@@ -32,6 +36,7 @@ ASTNode *rnum_node(double val)
 	return node;
 }
 
+// Allocate and initialize a `VAR_NODE` type node.
 ASTNode *var_node(char *name)
 {
 	ASTNode *node = malloc(sizeof *node);
@@ -39,6 +44,7 @@ ASTNode *var_node(char *name)
 	return node;
 }
 
+// Release `node` and all its child nodes.
 void free_node(ASTNode *node)
 {
 	if (!node) {
@@ -66,6 +72,7 @@ void free_node(ASTNode *node)
 	free(node);
 }
 
+// Print an S-exp of the subtree under `node`.
 void print_node(const ASTNode *node)
 {
 	static const char OP_SYM[] = {'+', '-', '*', '/', '^', '-'};
@@ -103,7 +110,7 @@ void print_node(const ASTNode *node)
 	}
 }
 
-// Return the resulting polynomial evaluating the subtree under `node`
+// Return the resulting polynomial evaluating the subtree under `node`.
 TermNode *eval_poly(const ASTNode *node)
 {
 	if (!node) { // for NEG op
@@ -170,17 +177,22 @@ TermNode *eval_poly(const ASTNode *node)
 	}
 }
 
-// Return the resulting relation evaluating the subtree under `node`
+// Return the resulting relation evaluating the subtree under `node`.
 RelNode *eval_rel(const ASTNode *node)
 {
 	TermNode *left = eval_poly(node->u.reldat.left);
 	TermNode *right = eval_poly(node->u.reldat.right);
-	if (sub_poly(&left, right)) {
-		RelNode *rnode = malloc(sizeof *rnode);
-		*rnode = (RelNode){node->u.reldat.rel, left, icoeff_term(0)};
-		return rnode;
-	} else {
+	if (!left || !right) { // Exception while evaluating `left` or `right`.
 		free_poly(left);
+		free_poly(right);
+		return NULL;
+	}
+
+	RelNode *r = rnode(node->u.reldat.rel, left, right);
+	if (norm_rel(r)) {
+		return r;
+	} else {
+		free_rel(r);
 		return NULL;
 	}
 }

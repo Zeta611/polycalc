@@ -7,7 +7,7 @@ OBJS = poly.o lex.o ast.o term.o rel.o
 poly:	$(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o poly
 
-poly.o:	ast.h term.h
+poly.o:	ast.h term.h rel.h
 
 lex.o:	x.tab.h
 

@@ -253,9 +253,10 @@ bool add_poly(TermNode **dest, TermNode *src)
 // Argument passed to `src` must not be used after `sub_poly` is called.
 bool sub_poly(TermNode **dest, TermNode *src)
 {
-	neg_poly(src);
-	add_poly(dest, src);
-	return true;
+	bool success = true;
+	success = success && neg_poly(src);
+	success = success && add_poly(dest, src);
+	return success;
 }
 
 static TermNode *term_dup(const TermNode *t)
