@@ -23,16 +23,13 @@
 %token	<var>	VAR
 %token	<rel>	REL
 
-%type	<node>	atom juxt poly expr
-
-%left	'+' '-'
-%left	'*' '/'
-%right	'^'
+%type	<node>	atom expt neg mult poly expr
 
 %%
 
 prgm:	  // nothing
 	| prgm '\n'
+	| prgm error '\n'
 	| prgm expr '\n' {
 		printf("AST: ");
 		print_node($2);
@@ -60,16 +57,21 @@ prgm:	  // nothing
 expr:	  poly
 	| poly REL poly	{ $$ = rel_node($2, $1, $3); }
 	;
-poly:	  juxt
-	| '-' juxt	{ $$ = op_node(NEG, $2, NULL); }
-	| poly '+' poly	{ $$ = op_node(ADD, $1, $3); }
-	| poly '-' poly	{ $$ = op_node(SUB, $1, $3); }
-	| poly '*' poly	{ $$ = op_node(MUL, $1, $3); }
-	| poly '/' poly	{ $$ = op_node(DIV, $1, $3); }
-	| poly '^' poly	{ $$ = op_node(POW, $1, $3); }
+poly:	  mult
+	| poly '+' mult	{ $$ = op_node(ADD, $1, $3); }
+	| poly '-' mult	{ $$ = op_node(SUB, $1, $3); }
 	;
-juxt:	  atom
-	| juxt atom { $$ = op_node(MUL, $1, $2); }
+mult:	  neg
+	| mult '*' neg	{ $$ = op_node(MUL, $1, $3); }
+	| mult '/' neg	{ $$ = op_node(DIV, $1, $3); }
+	| mult expt	{ $$ = op_node(MUL, $1, $2); }
+	;
+neg:	  expt
+	| '-' neg	{ $$ = op_node(NEG, $2, NULL); }
+	;
+expt:	  atom
+	| atom '^' neg	{ $$ = op_node(POW, $1, $3); }
+	;
 atom:	  INUM	{ $$ = inum_node($1); }
 	| RNUM	{ $$ = rnum_node($1); }
 	| VAR	{ $$ = var_node($1); }
