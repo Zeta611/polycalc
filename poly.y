@@ -1,12 +1,14 @@
 %code top {
-#include <stdio.h>
 #include "term.h"
+#include <stdio.h>
 }
 
 %code requires {
 #include "ast.h"
 #include "rel.h"
 }
+
+%parse-param { ASTNode *ast }
 
 %start	prgm
 
@@ -23,13 +25,13 @@
 %token	<var>	VAR
 %token	<rel>	REL
 
-%type	<node>	atom expt neg mult poly expr
+%type	<node>	atom expt neg mult poly rels expr
 
 %%
 
 prgm:	  // nothing
-	| prgm '\n'
-	| prgm error '\n'
+	| prgm '\n'	{ ast = NULL; }
+	| prgm error '\n'	{ ast = NULL; }
 	| prgm expr '\n' {
 		printf("AST: ");
 		print_node($2);
@@ -52,30 +54,36 @@ prgm:	  // nothing
 			}
 		}
 		putchar('\n');
-		free_node($2); }
+		free_node($2);
+		ast = NULL; }
 	;
 expr:	  poly
-	| poly REL poly	{ $$ = rel_node($2, $1, $3); }
+	| rels
+	;
+rels:	  poly REL poly	{ $$ = ast = rel_node($2, $1, $3); }
+	| poly REL poly '&' rels {
+		$$ = ast = rel_node($2, $1, $3);
+		$$->u.reldat.next = $5; }
 	;
 poly:	  mult
-	| poly '+' mult	{ $$ = op_node(ADD, $1, $3); }
-	| poly '-' mult	{ $$ = op_node(SUB, $1, $3); }
+	| poly '+' mult	{ $$ = ast = op_node(ADD, $1, $3); }
+	| poly '-' mult	{ $$ = ast = op_node(SUB, $1, $3); }
 	;
 mult:	  neg
-	| mult '*' neg	{ $$ = op_node(MUL, $1, $3); }
-	| mult '/' neg	{ $$ = op_node(DIV, $1, $3); }
-	| mult expt	{ $$ = op_node(MUL, $1, $2); }
+	| mult '*' neg	{ $$ = ast = op_node(MUL, $1, $3); }
+	| mult '/' neg	{ $$ = ast = op_node(DIV, $1, $3); }
+	| mult expt	{ $$ = ast = op_node(MUL, $1, $2); }
 	;
 neg:	  expt
-	| '-' neg	{ $$ = op_node(NEG, $2, NULL); }
+	| '-' neg	{ $$ = ast = op_node(NEG, $2, NULL); }
 	;
 expt:	  atom
-	| atom '^' neg	{ $$ = op_node(POW, $1, $3); }
+	| atom '^' neg	{ $$ = ast = op_node(POW, $1, $3); }
 	;
-atom:	  INUM	{ $$ = inum_node($1); }
-	| RNUM	{ $$ = rnum_node($1); }
-	| VAR	{ $$ = var_node($1); }
-	| '(' poly ')'	{ $$ = $2; }
+atom:	  INUM	{ $$ = ast = inum_node($1); }
+	| RNUM	{ $$ = ast = rnum_node($1); }
+	| VAR	{ $$ = ast = var_node($1); }
+	| '(' poly ')'	{ $$ = ast = $2; }
 	;
 %%
 
@@ -88,13 +96,15 @@ int main(int argc, char *argv[])
 {
 	progname = argv[0];
 	/* test(); */
-	yyparse();
+	ASTNode *ast = NULL;
+	yyparse(ast);
 	return 0;
 }
 
-int yyerror(char *s)
+int yyerror(ASTNode *ast, const char *msg)
 {
-	fprintf(stderr, "%s: %s near line %d\n", progname, s, lineno);
+	fprintf(stderr, "%s: %s near line %d\n", progname, msg, lineno);
+	free_node(ast);
 	return 0;
 }
 

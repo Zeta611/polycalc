@@ -54,6 +54,7 @@ void free_node(ASTNode *node)
 	case REL_NODE:
 		free_node(node->u.reldat.left);
 		free_node(node->u.reldat.right);
+		free_node(node->u.reldat.next);
 		break;
 	case OP_NODE:
 		free_node(node->u.opdat.left);
@@ -190,6 +191,14 @@ RelNode *eval_rel(const ASTNode *node)
 
 	RelNode *r = rnode(node->u.reldat.rel, left, right);
 	if (norm_rel(r)) {
+		if (node->u.reldat.next) {
+			RelNode *next = eval_rel(node->u.reldat.next);
+			if (!next) {
+				free_rel(r);
+				return NULL;
+			}
+			r->next = next;
+		}
 		return r;
 	} else {
 		free_rel(r);

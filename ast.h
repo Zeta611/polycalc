@@ -7,7 +7,7 @@ typedef struct ASTNode {
 	union {
 		struct {
 			enum Rel { EQ, GT, GE, LT, LE } rel;
-			struct ASTNode *left, *right;
+			struct ASTNode *left, *right, *next;
 		} reldat; // REL_NODE
 		struct {
 			enum Op { ADD, SUB, MUL, DIV, POW, NEG } op;

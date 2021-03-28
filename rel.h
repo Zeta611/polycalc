@@ -8,6 +8,7 @@ typedef struct RelNode {
 	Rel rel;
 	struct TermNode *left;
 	struct TermNode *right;
+	struct RelNode *next;
 } RelNode;
 
 struct TermNode;

@@ -33,6 +33,7 @@ rel	[<>]=?|=
 	return VAR; }
 {op}	{ return yytext[0]; }
 {par}	{ return yytext[0]; }
+\&	{ return yytext[0]; }
 {rel}	{
 	switch (yytext[0]) {
 	case '=':
