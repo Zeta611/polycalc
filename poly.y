@@ -23,7 +23,7 @@
 %token	<var>	VAR
 %token	<rel>	REL
 
-%type	<node>	poly expr
+%type	<node>	atom juxt poly expr
 
 %left	'+' '-'
 %left	'*' '/'
@@ -60,16 +60,19 @@ prgm:	  // nothing
 expr:	  poly
 	| poly REL poly	{ $$ = rel_node($2, $1, $3); }
 	;
-poly:	  INUM	{ $$ = inum_node($1); }
-	| RNUM	{ $$ = rnum_node($1); }
-	| VAR	{ $$ = var_node($1); }
+poly:	  juxt
+	| '-' juxt	{ $$ = op_node(NEG, $2, NULL); }
 	| poly '+' poly	{ $$ = op_node(ADD, $1, $3); }
 	| poly '-' poly	{ $$ = op_node(SUB, $1, $3); }
 	| poly '*' poly	{ $$ = op_node(MUL, $1, $3); }
 	| poly '/' poly	{ $$ = op_node(DIV, $1, $3); }
 	| poly '^' poly	{ $$ = op_node(POW, $1, $3); }
-	| poly poly %prec '*'	{ $$ = op_node(MUL, $1, $2); }
-	| '-' poly	{ $$ = op_node(NEG, $2, NULL); }
+	;
+juxt:	  atom
+	| juxt atom { $$ = op_node(MUL, $1, $2); }
+atom:	  INUM	{ $$ = inum_node($1); }
+	| RNUM	{ $$ = rnum_node($1); }
+	| VAR	{ $$ = var_node($1); }
 	| '(' poly ')'	{ $$ = $2; }
 	;
 %%
