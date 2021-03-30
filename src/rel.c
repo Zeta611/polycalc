@@ -28,7 +28,7 @@ void print_rel(const RelNode *r)
 	printf("%s ", REL_SYM[r->rel]);
 	print_poly(r->right);
 	if (r->next) {
-		printf(" &\n");
+		printf("\n   & ");
 		print_rel(r->next);
 	}
 }

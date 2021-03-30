@@ -82,10 +82,14 @@ void print_node(const ASTNode *node)
 	switch (node->type) {
 	case REL_NODE:
 		printf("(%s ", REL_SYM[node->u.reldat.rel]);
-		print_node(node->u.opdat.left);
+		print_node(node->u.reldat.left);
 		putchar(' ');
-		print_node(node->u.opdat.right);
+		print_node(node->u.reldat.right);
 		putchar(')');
+		if (node->u.reldat.next) {
+			printf(" & ");
+			print_node(node->u.reldat.next);
+		}
 		return;
 	case OP_NODE:
 		printf("(%c ", OP_SYM[node->u.opdat.op]);
