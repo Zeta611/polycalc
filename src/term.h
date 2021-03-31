@@ -38,6 +38,10 @@ TermNode *rcoeff_term(double val);
 
 TermNode *var_term(char *name, long pow);
 
+// For each term, first prioritize reverse-lexicographically, and then
+// prioritize higher orders. Compare the next term in case of a tie.
+int poly_cmp(const TermNode *p1, const TermNode *p2);
+
 // Add `src` to `dest`.
 // Argument passed to `src` must not be used after `add_poly` is called.
 bool add_poly(TermNode **dest, TermNode *src);

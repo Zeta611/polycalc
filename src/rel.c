@@ -12,6 +12,8 @@ RelNode *rnode(Rel rel, TermNode *left, TermNode *right)
 	return rnode;
 }
 
+inline Rel merge_rel(Rel r1, Rel r2) { return r1 & r2; }
+
 // Normalize `r`.
 bool norm_rel(RelNode *r)
 {
@@ -23,13 +25,17 @@ bool norm_rel(RelNode *r)
 // Print S-exps of the subtrees under `r` and linked nodes.
 void print_rel(const RelNode *r)
 {
-	static const char REL_SYM[][3] = {"=", ">", ">=", "<", "<="};
-	print_poly(r->left);
-	printf("%s ", REL_SYM[r->rel]);
-	print_poly(r->right);
-	if (r->next) {
-		printf("\n   & ");
-		print_rel(r->next);
+	static const char REL_SYM[][3] = {"", "=", ">", ">=", "<", "<="};
+	if (r->rel) {
+		print_poly(r->left);
+		printf("%s ", REL_SYM[r->rel]);
+		print_poly(r->right);
+		if (r->next) {
+			printf("\n   & ");
+			print_rel(r->next);
+		}
+	} else {
+		printf("INCONSISTENT SYSTEM");
 	}
 }
 

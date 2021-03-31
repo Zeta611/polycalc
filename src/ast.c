@@ -77,7 +77,7 @@ void free_node(ASTNode *node)
 void print_node(const ASTNode *node)
 {
 	static const char OP_SYM[] = {'+', '-', '*', '/', '^', '-'};
-	static const char REL_SYM[][3] = {"=", ">", ">=", "<", "<="};
+	static const char REL_SYM[][3] = {"", "=", ">", ">=", "<", "<="};
 
 	switch (node->type) {
 	case REL_NODE:
@@ -193,19 +193,49 @@ RelNode *eval_rel(const ASTNode *node)
 		return NULL;
 	}
 
+	// Both `left` and `right` are now owned by `r`.
 	RelNode *r = rnode(node->u.reldat.rel, left, right);
+	RelNode *hd; // For rest of the relations in the system.
 	if (norm_rel(r)) {
 		if (node->u.reldat.next) {
-			RelNode *next = eval_rel(node->u.reldat.next);
-			if (!next) {
-				free_rel(r);
-				return NULL;
+			hd = eval_rel(node->u.reldat.next);
+			if (!hd) { // Exception in previous relations.
+				goto r_cleanup;
 			}
-			r->next = next;
+			if (!hd->rel) {
+				goto inconsistent_sys;
+			}
+			int c;
+			RelNode **p = &hd;
+			while (*p && (c = poly_cmp(r->left, (*p)->left)) < 0) {
+				p = &(*p)->next;
+			}
+			if (*p && !c) { // Same polynomial found.
+				Rel rel = merge_rel(r->rel, (*p)->rel);
+				if (rel) {
+					free_rel(r);
+					(*p)->rel = rel;
+					return hd;
+				} else {
+					goto inconsistent_sys;
+				}
+			} else {
+				r->next = *p;
+				*p = r;
+				return hd;
+			}
+		} else {
+			return r;
 		}
-		return r;
-	} else {
-		free_rel(r);
-		return NULL;
 	}
+r_cleanup:
+	free_rel(r);
+	return NULL;
+inconsistent_sys:
+	free_rel(hd);
+	free_poly(r->left);
+	free_poly(r->right);
+	r->left = r->right = NULL;
+	r->rel = 0;
+	return r;
 }

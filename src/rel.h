@@ -15,6 +15,8 @@ struct TermNode;
 // Allocate and initialize a `RelNode`.
 RelNode *rnode(Rel rel, struct TermNode *left, struct TermNode *right);
 
+Rel merge_rel(Rel r1, Rel r2);
+
 // Normalize `r`.
 bool norm_rel(RelNode *r);
 

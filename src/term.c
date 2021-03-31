@@ -5,8 +5,11 @@
 #include <string.h>
 #include <tgmath.h>
 
+#define ncmp(x, y) (((x) > (y)) - ((x) < (y)))
+
 // Forward declarations for static functions
 static int var_cmp(const TermNode *t1, const TermNode *t2);
+static int coeff_cmp(const TermNode *p1, const TermNode *p2);
 static void add_coeff(TermNode *dest, const TermNode *src);
 static void mul_coeff(TermNode *dest, const TermNode *src);
 static void div_coeff(TermNode *dest, const TermNode *src);
@@ -72,6 +75,56 @@ static int var_cmp(const TermNode *t1, const TermNode *t2)
 		return cmp;
 	}
 	return var_cmp(t1->next, t2->next);
+}
+
+static int coeff_cmp(const TermNode *p1, const TermNode *p2)
+{
+	switch (p1->type) {
+	case ICOEFF_TERM:
+		switch (p2->type) {
+		case ICOEFF_TERM:
+			return ncmp(p1->hd.ival, p2->hd.ival);
+		case RCOEFF_TERM:
+			return ncmp(p1->hd.ival, p2->hd.rval);
+		default:
+			fprintf(stderr, "unexpected node type %d\n", p2->type);
+			abort();
+		}
+	case RCOEFF_TERM:
+		switch (p2->type) {
+		case ICOEFF_TERM:
+			return ncmp(p1->hd.rval, p2->hd.ival);
+		case RCOEFF_TERM:
+			return ncmp(p1->hd.rval, p2->hd.rval);
+		default:
+			fprintf(stderr, "unexpected node type %d\n", p2->type);
+			abort();
+		}
+	default:
+		fprintf(stderr, "unexpected node type %d\n", p1->type);
+		abort();
+	}
+}
+
+int poly_cmp(const TermNode *p1, const TermNode *p2)
+{
+	if (!p1 && !p2) {
+		return 0;
+	} else if (p1 && !p2) {
+		return 1;
+	} else if (!p1 && p2) {
+		return -1;
+	}
+	int cmp = var_cmp(p1->u.vars, p2->u.vars);
+	if (cmp) {
+		return cmp;
+	}
+	// `p1` and `p2` have the same highest-order term ignoring coefficients.
+	cmp = coeff_cmp(p1, p2);
+	if (cmp) {
+		return cmp;
+	}
+	return poly_cmp(p1->next, p2->next);
 }
 
 static void add_coeff(TermNode *dest, const TermNode *src)
