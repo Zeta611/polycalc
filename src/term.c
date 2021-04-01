@@ -9,7 +9,6 @@
 
 // Forward declarations for static functions
 static int var_cmp(const TermNode *t1, const TermNode *t2);
-static int coeff_cmp(const TermNode *p1, const TermNode *p2);
 static void add_coeff(TermNode *dest, const TermNode *src);
 static void mul_coeff(TermNode *dest, const TermNode *src);
 static void div_coeff(TermNode *dest, const TermNode *src);
@@ -77,7 +76,7 @@ static int var_cmp(const TermNode *t1, const TermNode *t2)
 	return var_cmp(t1->next, t2->next);
 }
 
-static int coeff_cmp(const TermNode *p1, const TermNode *p2)
+int coeff_cmp(const TermNode *p1, const TermNode *p2)
 {
 	switch (p1->type) {
 	case ICOEFF_TERM:

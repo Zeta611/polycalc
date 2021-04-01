@@ -38,6 +38,8 @@ TermNode *rcoeff_term(double val);
 
 TermNode *var_term(char *name, long pow);
 
+int coeff_cmp(const TermNode *p1, const TermNode *p2);
+
 // For each term, first prioritize reverse-lexicographically, and then
 // prioritize higher orders. Compare the next term in case of a tie.
 int poly_cmp(const TermNode *p1, const TermNode *p2);

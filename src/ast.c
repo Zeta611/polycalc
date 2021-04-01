@@ -195,8 +195,11 @@ RelNode *eval_rel(const ASTNode *node)
 
 	// Both `left` and `right` are now owned by `r`.
 	RelNode *r = rnode(node->u.reldat.rel, left, right);
-	RelNode *hd; // For rest of the relations in the system.
+	RelNode *hd = NULL; // For rest of the relations in the system.
 	if (norm_rel(r)) {
+		if (!r->left->u.vars && !verify_nrel(r)) {
+			goto inconsistent_sys;
+		}
 		if (node->u.reldat.next) {
 			hd = eval_rel(node->u.reldat.next);
 			if (!hd) { // Exception in previous relations.

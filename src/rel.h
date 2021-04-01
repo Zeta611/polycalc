@@ -20,6 +20,9 @@ Rel merge_rel(Rel r1, Rel r2);
 // Normalize `r`.
 bool norm_rel(RelNode *r);
 
+// Check `n Rel 0` type of relations
+bool verify_nrel(const RelNode *r);
+
 // Print an S-exp of the subtree under `r`.
 void print_rel(const RelNode *r);
 

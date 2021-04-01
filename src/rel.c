@@ -6,6 +6,7 @@
 
 static void swap(long *a, long *b);
 static long gcd(long a, long b);
+static Rel rev_rel(Rel rel);
 
 static void swap(long *a, long *b)
 {
@@ -21,6 +22,24 @@ static long gcd(long a, long b)
 		swap(&a, &b);
 	}
 	return a;
+}
+
+static Rel rev_rel(Rel rel)
+{
+	switch (rel) {
+	case EQ:
+		return EQ;
+	case GT:
+		return LT;
+	case GE:
+		return LE;
+	case LT:
+		return GT;
+	case LE:
+		return GE;
+	default:
+		return 0;
+	}
 }
 
 // Allocate and initialize a `RelNode`.
@@ -53,9 +72,11 @@ bool norm_rel(RelNode *r)
 			g = gcd(labs(t->hd.ival), g);
 		}
 	}
+
 	if (g > 1) {
 		if (r->left->hd.ival < 0) {
 			g = -g;
+			r->rel = rev_rel(r->rel);
 		}
 		for (TermNode *t = r->left; t; t = t->next) {
 			switch (t->type) {
@@ -72,6 +93,8 @@ bool norm_rel(RelNode *r)
 			}
 		}
 	} else if (r->left->hd.ival < 0) {
+		r->rel = rev_rel(r->rel);
+
 		for (TermNode *t = r->left; t; t = t->next) {
 			switch (t->type) {
 			case ICOEFF_TERM:
@@ -88,6 +111,24 @@ bool norm_rel(RelNode *r)
 		}
 	}
 	return true;
+}
+
+bool verify_nrel(const RelNode *r)
+{
+	switch (r->rel) {
+	case EQ:
+		return coeff_cmp(r->left, r->right) == 0;
+	case GT:
+		return coeff_cmp(r->left, r->right) > 0;
+	case GE:
+		return coeff_cmp(r->left, r->right) >= 0;
+	case LT:
+		return coeff_cmp(r->left, r->right) < 0;
+	case LE:
+		return coeff_cmp(r->left, r->right) <= 0;
+	default:
+		return false;
+	}
 }
 
 // Print S-exps of the subtrees under `r` and linked nodes.
