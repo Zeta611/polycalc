@@ -17,6 +17,7 @@ typedef struct ASTNode {
 		double rval; // RNUM_NODE
 		char *name;  // VAR_NODE
 	} u;
+	struct ASTNode *next;
 } ASTNode;
 
 typedef enum Rel Rel;

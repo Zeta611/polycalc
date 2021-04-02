@@ -8,7 +8,8 @@
 ASTNode *rel_node(Rel rel, ASTNode *left, ASTNode *right)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){REL_NODE, .u.reldat = {rel, left, right}};
+	*node =
+	    (ASTNode){REL_NODE, .u.reldat = {rel, left, right}, .next = NULL};
 	return node;
 }
 
@@ -16,7 +17,7 @@ ASTNode *rel_node(Rel rel, ASTNode *left, ASTNode *right)
 ASTNode *op_node(Op op, ASTNode *left, ASTNode *right)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){OP_NODE, .u.opdat = {op, left, right}};
+	*node = (ASTNode){OP_NODE, .u.opdat = {op, left, right}, .next = NULL};
 	return node;
 }
 
@@ -24,7 +25,7 @@ ASTNode *op_node(Op op, ASTNode *left, ASTNode *right)
 ASTNode *inum_node(long val)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){INUM_NODE, .u.ival = val};
+	*node = (ASTNode){INUM_NODE, .u.ival = val, .next = NULL};
 	return node;
 }
 
@@ -32,7 +33,7 @@ ASTNode *inum_node(long val)
 ASTNode *rnum_node(double val)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){RNUM_NODE, .u.rval = val};
+	*node = (ASTNode){RNUM_NODE, .u.rval = val, .next = NULL};
 	return node;
 }
 
@@ -40,7 +41,7 @@ ASTNode *rnum_node(double val)
 ASTNode *var_node(char *name)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){VAR_NODE, .u.name = name};
+	*node = (ASTNode){VAR_NODE, .u.name = name, .next = NULL};
 	return node;
 }
 
@@ -48,28 +49,12 @@ ASTNode *var_node(char *name)
 void free_node(ASTNode *node)
 {
 	if (!node) {
-		return; // Right child of a `NEG` node is `NULL`.
+		return;
 	}
-	switch (node->type) {
-	case REL_NODE:
-		free_node(node->u.reldat.left);
-		free_node(node->u.reldat.right);
-		free_node(node->u.reldat.next);
-		break;
-	case OP_NODE:
-		free_node(node->u.opdat.left);
-		free_node(node->u.opdat.right);
-		break;
-	case INUM_NODE:
-	case RNUM_NODE:
-		break;
-	case VAR_NODE:
-		free(node->u.name); // `u.name` was allocated in the lexer.
-		break;
-	default:
-		fprintf(stderr, "unexpected node type %d\n", node->type);
-		abort();
+	if (node->type == VAR_NODE) {
+		free(node->u.name);
 	}
+	free_node(node->next);
 	free(node);
 }
 

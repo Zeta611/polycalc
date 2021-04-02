@@ -1,6 +1,7 @@
 %code top {
 #include "term.h"
 #include <stdio.h>
+#define set_nlist(n) (n)->next = nlist; nlist = (n)
 }
 
 %code requires {
@@ -8,7 +9,7 @@
 #include "rel.h"
 }
 
-%parse-param { ASTNode *ast }
+%parse-param { ASTNode *nlist }
 
 %start	prgm
 
@@ -30,8 +31,8 @@
 %%
 
 prgm:	  // nothing
-	| prgm '\n'	{ ast = NULL; }
-	| prgm error '\n'	{ ast = NULL; }
+	| prgm '\n'
+	| prgm error '\n'	{ nlist = NULL; }
 	| prgm expr '\n' {
 		printf("AST: ");
 		print_node($2);
@@ -54,36 +55,37 @@ prgm:	  // nothing
 			}
 		}
 		putchar('\n');
-		free_node($2);
-		ast = NULL; }
+		free_node(nlist);
+		nlist = NULL; }
 	;
 expr:	  poly
 	| rels
 	;
-rels:	  poly REL poly	{ $$ = ast = rel_node($2, $1, $3); }
+rels:	  poly REL poly	{ $$ = rel_node($2, $1, $3); set_nlist($$); }
 	| poly REL poly '&' rels {
-		$$ = ast = rel_node($2, $1, $3);
+		$$ = rel_node($2, $1, $3);
+		set_nlist($$);
 		$$->u.reldat.next = $5; }
 	;
 poly:	  mult
-	| poly '+' mult	{ $$ = ast = op_node(ADD, $1, $3); }
-	| poly '-' mult	{ $$ = ast = op_node(SUB, $1, $3); }
+	| poly '+' mult	{ $$ = op_node(ADD, $1, $3); set_nlist($$); }
+	| poly '-' mult	{ $$ = op_node(SUB, $1, $3); set_nlist($$); }
 	;
 mult:	  neg
-	| mult '*' neg	{ $$ = ast = op_node(MUL, $1, $3); }
-	| mult '/' neg	{ $$ = ast = op_node(DIV, $1, $3); }
-	| mult expt	{ $$ = ast = op_node(MUL, $1, $2); }
+	| mult '*' neg	{ $$ = op_node(MUL, $1, $3); set_nlist($$); }
+	| mult '/' neg	{ $$ = op_node(DIV, $1, $3); set_nlist($$); }
+	| mult expt	{ $$ = op_node(MUL, $1, $2); set_nlist($$); }
 	;
 neg:	  expt
-	| '-' neg	{ $$ = ast = op_node(NEG, $2, NULL); }
+	| '-' neg	{ $$ = op_node(NEG, $2, NULL); set_nlist($$); }
 	;
 expt:	  atom
-	| atom '^' neg	{ $$ = ast = op_node(POW, $1, $3); }
+	| atom '^' neg	{ $$ = op_node(POW, $1, $3); set_nlist($$); }
 	;
-atom:	  INUM	{ $$ = ast = inum_node($1); }
-	| RNUM	{ $$ = ast = rnum_node($1); }
-	| VAR	{ $$ = ast = var_node($1); }
-	| '(' poly ')'	{ $$ = ast = $2; }
+atom:	  INUM	{ $$ = inum_node($1); set_nlist($$); }
+	| RNUM	{ $$ = rnum_node($1); set_nlist($$); }
+	| VAR	{ $$ = var_node($1); set_nlist($$); }
+	| '(' poly ')'	{ $$ = $2; }
 	;
 %%
 
@@ -96,15 +98,15 @@ int main(int argc, char *argv[])
 {
 	progname = argv[0];
 	/* test(); */
-	ASTNode *ast = NULL;
-	yyparse(ast);
+	ASTNode *nlist = NULL;
+	yyparse(nlist);
 	return 0;
 }
 
-int yyerror(ASTNode *ast, const char *msg)
+int yyerror(ASTNode *nlist, const char *msg)
 {
 	fprintf(stderr, "%s: %s near line %d\n", progname, msg, lineno);
-	free_node(ast);
+	free_node(nlist);
 	return 0;
 }
 
