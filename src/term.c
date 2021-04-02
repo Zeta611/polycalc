@@ -1,11 +1,10 @@
 #include "term.h"
+#include "util.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <tgmath.h>
-
-#define ncmp(x, y) (((x) > (y)) - ((x) < (y)))
 
 // Forward declarations for static functions
 static int var_cmp(const TermNode *t1, const TermNode *t2);
@@ -69,7 +68,7 @@ static int var_cmp(const TermNode *t1, const TermNode *t2)
 		return -cmp;
 	}
 	// `t1` and `t2` start with a same variable term.
-	cmp = t1->u.pow - t2->u.pow;
+	cmp = (t1->u.pow > t2->u.pow) - (t1->u.pow < t2->u.pow);
 	if (cmp) {
 		return cmp;
 	}

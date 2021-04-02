@@ -1,28 +1,9 @@
 #include "rel.h"
 #include "term.h"
+#include "util.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-static void swap(long *a, long *b);
-static long gcd(long a, long b);
-static Rel rev_rel(Rel rel);
-
-static void swap(long *a, long *b)
-{
-	long tmp = *a;
-	*a = *b;
-	*b = tmp;
-}
-
-static long gcd(long a, long b)
-{
-	while (b) {
-		a -= b * (a / b);
-		swap(&a, &b);
-	}
-	return a;
-}
 
 static Rel rev_rel(Rel rel)
 {
