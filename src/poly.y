@@ -1,15 +1,12 @@
 %code top {
 #include "term.h"
 #include <stdio.h>
-#define set_nlist(n) (n)->next = nlist; nlist = (n)
 }
 
 %code requires {
 #include "ast.h"
 #include "rel.h"
 }
-
-%parse-param { ASTNode *nlist }
 
 %start	prgm
 
@@ -28,11 +25,14 @@
 
 %type	<node>	atom expt neg mult poly rels expr
 
+%destructor { free($$); } VAR
+%destructor { free_node($$); } <node>
+
 %%
 
 prgm:	  // nothing
 	| prgm '\n'
-	| prgm error '\n'	{ nlist = NULL; }
+	| prgm error '\n'
 	| prgm expr '\n' {
 		printf("AST: ");
 		print_node($2);
@@ -55,36 +55,34 @@ prgm:	  // nothing
 			}
 		}
 		putchar('\n');
-		free_node(nlist);
-		nlist = NULL; }
+		free_node($2); }
 	;
 expr:	  poly
 	| rels
 	;
-rels:	  poly REL poly	{ $$ = rel_node($2, $1, $3); set_nlist($$); }
+rels:	  poly REL poly	{ $$ = rel_node($2, $1, $3); }
 	| poly REL poly '&' rels {
 		$$ = rel_node($2, $1, $3);
-		set_nlist($$);
 		$$->u.reldat.next = $5; }
 	;
 poly:	  mult
-	| poly '+' mult	{ $$ = op_node(ADD, $1, $3); set_nlist($$); }
-	| poly '-' mult	{ $$ = op_node(SUB, $1, $3); set_nlist($$); }
+	| poly '+' mult	{ $$ = op_node(ADD, $1, $3); }
+	| poly '-' mult	{ $$ = op_node(SUB, $1, $3); }
 	;
 mult:	  neg
-	| mult '*' neg	{ $$ = op_node(MUL, $1, $3); set_nlist($$); }
-	| mult '/' neg	{ $$ = op_node(DIV, $1, $3); set_nlist($$); }
-	| mult expt	{ $$ = op_node(MUL, $1, $2); set_nlist($$); }
+	| mult '*' neg	{ $$ = op_node(MUL, $1, $3); }
+	| mult '/' neg	{ $$ = op_node(DIV, $1, $3); }
+	| mult expt	{ $$ = op_node(MUL, $1, $2); }
 	;
 neg:	  expt
-	| '-' neg	{ $$ = op_node(NEG, $2, NULL); set_nlist($$); }
+	| '-' neg	{ $$ = op_node(NEG, $2, NULL); }
 	;
 expt:	  atom
-	| atom '^' neg	{ $$ = op_node(POW, $1, $3); set_nlist($$); }
+	| atom '^' neg	{ $$ = op_node(POW, $1, $3); }
 	;
-atom:	  INUM	{ $$ = inum_node($1); set_nlist($$); }
-	| RNUM	{ $$ = rnum_node($1); set_nlist($$); }
-	| VAR	{ $$ = var_node($1); set_nlist($$); }
+atom:	  INUM	{ $$ = inum_node($1); }
+	| RNUM	{ $$ = rnum_node($1); }
+	| VAR	{ $$ = var_node($1); }
 	| '(' poly ')'	{ $$ = $2; }
 	;
 %%
@@ -98,15 +96,13 @@ int main(int argc, char *argv[])
 {
 	progname = argv[0];
 	/* test(); */
-	ASTNode *nlist = NULL;
-	yyparse(nlist);
+	yyparse();
 	return 0;
 }
 
-int yyerror(ASTNode *nlist, const char *msg)
+int yyerror(const char *msg)
 {
 	fprintf(stderr, "%s: %s near line %d\n", progname, msg, lineno);
-	free_node(nlist);
 	return 0;
 }
 

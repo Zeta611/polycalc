@@ -51,10 +51,26 @@ void free_node(ASTNode *node)
 	if (!node) {
 		return;
 	}
-	if (node->type == VAR_NODE) {
+	switch (node->type) {
+	case REL_NODE:
+		free_node(node->u.reldat.left);
+		free_node(node->u.reldat.right);
+		free_node(node->u.reldat.next);
+		break;
+	case OP_NODE:
+		free_node(node->u.opdat.left);
+		free_node(node->u.opdat.right);
+		break;
+	case INUM_NODE:
+	case RNUM_NODE:
+		break;
+	case VAR_NODE:
 		free(node->u.name);
+		break;
+	default:
+		fprintf(stderr, "unexpected node type %d\n", node->type);
+		abort();
 	}
-	free_node(node->next);
 	free(node);
 }
 
