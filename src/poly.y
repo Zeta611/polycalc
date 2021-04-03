@@ -22,43 +22,53 @@
 %token	<inum>	INUM
 %token	<var>	VAR
 %token	<rel>	REL
+%token		ASGN
 
-%type	<node>	atom expt neg mult poly rels expr
+%type	<node>	atom expt neg mult poly rels asgn
 
-%destructor { free($$); } VAR
-%destructor { free_node($$); } <node>
+%destructor { free($$); }	VAR
+%destructor { free_node($$); }	<node>
 
 %%
 
 prgm:	  // nothing
 	| prgm '\n'
 	| prgm error '\n'
-	| prgm expr '\n' {
+	| prgm rels '\n' {
 		printf("AST: ");
 		print_node($2);
 		putchar('\n');
-		if ($2->type == REL_NODE) {
-			RelNode *r;
-			if ((r = eval_rel($2))) {
-				printf("REL: ");
-				print_rel(r);
-				putchar('\n');
-				free_rel(r);
-			}
-		} else {
-			TermNode *p;
-			if ((p = eval_poly($2))) {
-				printf("VAL: ");
-				print_poly(p);
-				putchar('\n');
-				free_poly(p);
-			}
+		RelNode *r;
+		if ((r = eval_rel($2))) {
+			printf("REL: ");
+			print_rel(r);
+			putchar('\n');
+			free_rel(r);
 		}
 		putchar('\n');
 		free_node($2); }
+	| prgm poly '\n' {
+		printf("AST: ");
+		print_node($2);
+		putchar('\n');
+		TermNode *p;
+		if ((p = eval_poly($2))) {
+			printf("VAL: ");
+			print_poly(p);
+			putchar('\n');
+			free_poly(p);
+		}
+		putchar('\n');
+		free_node($2); }
+	| prgm asgn '\n' {
+		printf("AST: ");
+		print_node($2);
+		putchar('\n');
+		printf("ASSIGNMENT\n"); // TODO
+		putchar('\n');
+		free_node($2); }
 	;
-expr:	  poly
-	| rels
+asgn:	  VAR ASGN poly	{ $$ = asgn_node(var_node($1), $3); }
 	;
 rels:	  poly REL poly	{ $$ = rel_node($2, $1, $3); }
 	| poly REL poly '&' rels {

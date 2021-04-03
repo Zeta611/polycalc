@@ -3,8 +3,16 @@
 
 // `ASTNode` is the building block of our AST.
 typedef struct ASTNode {
-	enum { REL_NODE, OP_NODE, INUM_NODE, RNUM_NODE, VAR_NODE } type;
+	enum { ASGN_NODE,
+	       REL_NODE,
+	       OP_NODE,
+	       INUM_NODE,
+	       RNUM_NODE,
+	       VAR_NODE } type;
 	union {
+		struct {
+			struct ASTNode *left, *right;
+		} asgndat; // ASGN_NODE
 		struct {
 			enum Rel { EQ = 1, GT, GE, LT, LE } rel;
 			struct ASTNode *left, *right, *next;
@@ -22,6 +30,9 @@ typedef struct ASTNode {
 
 typedef enum Rel Rel;
 typedef enum Op Op;
+
+// Allocate and initialize a `ASGN_NODE` type node.
+ASTNode *asgn_node(ASTNode *left, ASTNode *right);
 
 // Allocate and initialize a `REL_NODE` type node.
 ASTNode *rel_node(Rel rel, ASTNode *left, ASTNode *right);

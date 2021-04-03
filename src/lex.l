@@ -49,5 +49,6 @@ rel	[<>]=?|=
 		break;
 	}
 	return REL; }
+":="	{ return ASGN; }
 \n	{ ++lineno; return '\n'; }
 .	{ printf("unknown token %c\n", yytext[0]); }

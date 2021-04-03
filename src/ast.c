@@ -4,6 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Allocate and initialize a `ASGN_NODE` type node.
+ASTNode *asgn_node(ASTNode *left, ASTNode *right)
+{
+	ASTNode *node = malloc(sizeof *node);
+	*node = (ASTNode){ASGN_NODE, .u.asgndat = {left, right}, .next = NULL};
+	return node;
+}
+
 // Allocate and initialize a `REL_NODE` type node.
 ASTNode *rel_node(Rel rel, ASTNode *left, ASTNode *right)
 {
@@ -52,6 +60,10 @@ void free_node(ASTNode *node)
 		return;
 	}
 	switch (node->type) {
+	case ASGN_NODE:
+		free_node(node->u.asgndat.left);
+		free_node(node->u.asgndat.right);
+		break;
 	case REL_NODE:
 		free_node(node->u.reldat.left);
 		free_node(node->u.reldat.right);
@@ -81,6 +93,13 @@ void print_node(const ASTNode *node)
 	static const char REL_SYM[][3] = {"", "=", ">", ">=", "<", "<="};
 
 	switch (node->type) {
+	case ASGN_NODE:
+		printf("(:= ");
+		print_node(node->u.asgndat.left);
+		putchar(' ');
+		print_node(node->u.asgndat.right);
+		putchar(')');
+		return;
 	case REL_NODE:
 		printf("(%s ", REL_SYM[node->u.reldat.rel]);
 		print_node(node->u.reldat.left);
