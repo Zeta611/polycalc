@@ -4,6 +4,7 @@
 }
 
 %code requires {
+#include "asgn.h" // TODO
 #include "ast.h"
 #include "rel.h"
 }
@@ -29,6 +30,8 @@
 %destructor { free($$); }	VAR
 %destructor { free_node($$); }	<node>
 
+%parse-param { EnvFrame **env }
+
 %%
 
 prgm:	  // nothing
@@ -39,7 +42,7 @@ prgm:	  // nothing
 		print_node($2);
 		putchar('\n');
 		RelNode *r;
-		if ((r = eval_rel($2))) {
+		if ((r = eval_rel($2, *env))) {
 			printf("REL: ");
 			print_rel(r);
 			putchar('\n');
@@ -52,7 +55,7 @@ prgm:	  // nothing
 		print_node($2);
 		putchar('\n');
 		TermNode *p;
-		if ((p = eval_poly($2))) {
+		if ((p = eval_poly($2, *env))) {
 			printf("VAL: ");
 			print_poly(p);
 			putchar('\n');
@@ -64,7 +67,15 @@ prgm:	  // nothing
 		printf("AST: ");
 		print_node($2);
 		putchar('\n');
-		printf("ASSIGNMENT\n"); // TODO
+		const char *name = $2->u.asgndat.left->u.name;
+		TermNode *p;
+		if ((p = eval_asgn($2, env))) {
+			printf("ASN: %s := ", name);
+			print_poly(p);
+			putchar('\n');
+		} else {
+			printf("Var %s already defined.\n", name);
+		}
 		putchar('\n');
 		free_node($2); }
 	;
@@ -106,12 +117,15 @@ int main(int argc, char *argv[])
 {
 	progname = argv[0];
 	/* test(); */
-	yyparse();
+	EnvFrame *env = NULL;
+	yyparse(&env);
+	free_env(env);
 	return 0;
 }
 
-int yyerror(const char *msg)
+int yyerror(EnvFrame **env, const char *msg)
 {
+	(void)env;
 	fprintf(stderr, "%s: %s near line %d\n", progname, msg, lineno);
 	return 0;
 }

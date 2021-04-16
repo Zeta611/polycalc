@@ -1,5 +1,6 @@
 #ifndef AST_H
 #define AST_H
+#include <stdbool.h>
 
 // `ASTNode` is the building block of our AST.
 typedef struct ASTNode {
@@ -56,11 +57,15 @@ void free_node(ASTNode *node);
 void print_node(const ASTNode *node);
 
 struct TermNode;
+struct EnvFrame;
 // Return the resulting polynomial evaluating the subtree under `node`.
-struct TermNode *eval_poly(const ASTNode *node);
+struct TermNode *eval_poly(const ASTNode *node, const struct EnvFrame *env);
 
 struct RelNode;
 // Return the resulting relation evaluating the subtree under `node`.
-struct RelNode *eval_rel(const ASTNode *node);
+struct RelNode *eval_rel(const ASTNode *node, const struct EnvFrame *env);
+
+// Return the assigned polynomial.
+struct TermNode *eval_asgn(const ASTNode *node, struct EnvFrame **env);
 
 #endif /* ifndef AST_H */

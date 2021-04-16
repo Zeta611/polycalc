@@ -1,8 +1,10 @@
 #include "ast.h"
+#include "asgn.h"
 #include "rel.h"
 #include "term.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // Allocate and initialize a `ASGN_NODE` type node.
 ASTNode *asgn_node(ASTNode *left, ASTNode *right)
@@ -136,7 +138,7 @@ void print_node(const ASTNode *node)
 }
 
 // Return the resulting polynomial evaluating the subtree under `node`.
-TermNode *eval_poly(const ASTNode *node)
+TermNode *eval_poly(const ASTNode *node, const EnvFrame *env)
 {
 	if (!node) { // for NEG op
 		return NULL;
@@ -144,8 +146,8 @@ TermNode *eval_poly(const ASTNode *node)
 	switch (node->type) {
 	case OP_NODE: {
 		Op op = node->u.opdat.op;
-		TermNode *lt = eval_poly(node->u.opdat.left);
-		TermNode *rt = eval_poly(node->u.opdat.right);
+		TermNode *lt = eval_poly(node->u.opdat.left, env);
+		TermNode *rt = eval_poly(node->u.opdat.right, env);
 
 		// Result of `eval_poly` being `NULL` indicates an invalid
 		// syntax or an operation, except for the result of evaluating
@@ -203,10 +205,10 @@ TermNode *eval_poly(const ASTNode *node)
 }
 
 // Return the resulting relation evaluating the subtree under `node`.
-RelNode *eval_rel(const ASTNode *node)
+RelNode *eval_rel(const ASTNode *node, const EnvFrame *env)
 {
-	TermNode *left = eval_poly(node->u.reldat.left);
-	TermNode *right = eval_poly(node->u.reldat.right);
+	TermNode *left = eval_poly(node->u.reldat.left, env);
+	TermNode *right = eval_poly(node->u.reldat.right, env);
 	if (!left || !right) { // Exception while evaluating `left` or `right`.
 		free_poly(left);
 		free_poly(right);
@@ -221,7 +223,7 @@ RelNode *eval_rel(const ASTNode *node)
 			goto inconsistent_sys;
 		}
 		if (node->u.reldat.next) {
-			hd = eval_rel(node->u.reldat.next);
+			hd = eval_rel(node->u.reldat.next, env);
 			if (!hd) { // Exception in previous relations.
 				goto r_cleanup;
 			}
@@ -261,4 +263,18 @@ inconsistent_sys:
 	r->left = r->right = NULL;
 	r->rel = 0;
 	return r;
+}
+
+// Return the assigned polynomial.
+TermNode *eval_asgn(const ASTNode *node, EnvFrame **env)
+{
+	// Setup the variable name (LHS)
+	const char *name = node->u.asgndat.left->u.name;
+	char *s = malloc(strlen(name) + 1);
+	strcpy(s, name);
+	// Evaluate RHS
+	TermNode *poly = eval_poly(node->u.asgndat.right, *env);
+
+	set_var(s, poly, env);
+	return poly;
 }
