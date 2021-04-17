@@ -44,6 +44,9 @@ int coeff_cmp(const TermNode *p1, const TermNode *p2);
 // prioritize higher orders. Compare the next term in case of a tie.
 int poly_cmp(const TermNode *p1, const TermNode *p2);
 
+// Duplicate `p`.
+TermNode *poly_dup(const TermNode *p);
+
 // Add `src` to `dest`.
 // Argument passed to `src` must not be used after `add_poly` is called.
 bool add_poly(TermNode **dest, TermNode *src);

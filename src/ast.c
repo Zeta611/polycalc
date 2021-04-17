@@ -193,10 +193,17 @@ TermNode *eval_poly(const ASTNode *node, const EnvFrame *env)
 	case RNUM_NODE:
 		return rcoeff_term(node->u.rval);
 	case VAR_NODE: {
-		TermNode *ct = icoeff_term(1);
-		TermNode *vt = var_term(node->u.name, 1);
-		ct->u.vars = vt;
-		return ct;
+		TermNode *p;
+		// Check if there is already a term assigned to `node->u.name`
+		// in `env`.
+		if ((p = lookup(node->u.name, env))) {
+			return poly_dup(p);
+		} else {
+			p = icoeff_term(1);
+			TermNode *vt = var_term(node->u.name, 1);
+			p->u.vars = vt;
+			return p;
+		}
 	}
 	default:
 		fprintf(stderr, "unexpected node type %d\n", node->type);
@@ -265,16 +272,35 @@ inconsistent_sys:
 	return r;
 }
 
-// Return the assigned polynomial.
+// Return the assigned polynomial. `NULL` indicates a duplicate definition or a
+// self-reference.
 TermNode *eval_asgn(const ASTNode *node, EnvFrame **env)
 {
 	// Setup the variable name (LHS)
 	const char *name = node->u.asgndat.left->u.name;
 	char *s = malloc(strlen(name) + 1);
 	strcpy(s, name);
-	// Evaluate RHS
-	TermNode *poly = eval_poly(node->u.asgndat.right, *env);
 
-	set_var(s, poly, env);
+	TermNode *poly = eval_poly(node->u.asgndat.right, *env);
+	// Search for a cyclic definition.
+	for (TermNode *t = poly; t; t = t->next) {
+		for (TermNode *var = t->u.vars; var; var = var->next) {
+			// Variables are sorted reverse-lexicographically.
+			int cmp = -strcmp(var->hd.name, s);
+			if (cmp == 0) { // A self-reference is found.
+				goto cleanup;
+			} else if (cmp < 0) {
+				break;
+			}
+		}
+	}
+
+	if (!set_var(s, poly, env)) { // A variable named `name` already exists.
+		goto cleanup;
+	}
 	return poly;
+cleanup:
+	free_poly(poly);
+	free(s);
+	return NULL;
 }

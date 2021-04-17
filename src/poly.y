@@ -74,7 +74,9 @@ prgm:	  // nothing
 			print_poly(p);
 			putchar('\n');
 		} else {
-			printf("Var %s already defined.\n", name);
+			printf("Variable %s is already defined or "
+			       "self-referenced.\n",
+			       name);
 		}
 		putchar('\n');
 		free_node($2); }

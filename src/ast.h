@@ -65,7 +65,8 @@ struct RelNode;
 // Return the resulting relation evaluating the subtree under `node`.
 struct RelNode *eval_rel(const ASTNode *node, const struct EnvFrame *env);
 
-// Return the assigned polynomial.
+// Return the assigned polynomial. `NULL` indicates a duplicate definition or a
+// self-reference.
 struct TermNode *eval_asgn(const ASTNode *node, struct EnvFrame **env);
 
 #endif /* ifndef AST_H */

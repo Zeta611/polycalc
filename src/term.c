@@ -17,7 +17,6 @@ static void reduce0(TermNode **p);
 
 static TermNode *term_dup(const TermNode *t);
 static TermNode *var_dup(const TermNode *v);
-static TermNode *poly_dup(const TermNode *p);
 
 static void mul_var(TermNode **dest, TermNode *src);
 
@@ -339,7 +338,8 @@ static TermNode *var_dup(const TermNode *v)
 	return hd;
 }
 
-static TermNode *poly_dup(const TermNode *p)
+// Duplicate `p`.
+TermNode *poly_dup(const TermNode *p)
 {
 	TermNode *hd, **dup;
 	dup = NULL;
