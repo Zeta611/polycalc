@@ -1,5 +1,7 @@
 # PolyCalc
 PolyCalc is a polynomial calculator.
+It calculates and expands polynomials, equations, and relations.
+It supports simple variable assignments for the ease of handling expressions.
 
 ## Usage
 PolyCalc can be used as a simple calculator:
@@ -30,6 +32,23 @@ VAL: a^4 + -2 a^2 b^2 + b^4
 AST: (+ (* (+ x y) (- x y)) (^ y 2))
 VAL: x^2
 ```
+
+Use assignments to improve readability and avoid repetitions:
+```
+'sum := a + b
+AST: (:= sum (+ a b))
+ASN: sum := a + b
+
+'sub := a - b
+AST: (:= sub (- a b))
+ASN: sub := a + -1 b
+
+'sum * 'sub
+AST: (* sum sub)
+VAL: a^2 + -1 b^2
+```
+Note that the assignment operator is `:=`, not `=` which represents a relation
+presented below.
 
 It can simplify (a system of) equations/inequalities as well:
 ```
