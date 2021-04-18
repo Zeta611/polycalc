@@ -102,3 +102,9 @@ After `make`, the executable is placed under `build` directory:
 ```sh
 ./build/poly
 ```
+
+You can use [`rlwrap`](https://github.com/hanslub42/rlwrap), e.g., to use arrow
+keys:
+```sh
+rlwrap ./build/poly
+```
