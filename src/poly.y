@@ -2,6 +2,7 @@
 #include "term.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 }
 
 %code requires {
@@ -31,7 +32,7 @@
 %destructor { free($$); }	VAR
 %destructor { free_node($$); }	<node>
 
-%parse-param { EnvFrame **env }
+%parse-param { EnvFrame **env } { bool *verbose }
 
 %%
 
@@ -39,47 +40,65 @@ prgm:	  // nothing
 	| prgm '\n'
 	| prgm error '\n'
 	| prgm rels '\n' {
-		printf("AST: ");
-		print_node($2);
-		putchar('\n');
+		if (*verbose) {
+			printf("AST: ");
+			print_node($2);
+			putchar('\n');
+		}
 		RelNode *r;
 		if ((r = eval_rel($2, *env))) {
-			printf("REL: ");
+			if (*verbose) {
+				printf("REL: ");
+			}
 			print_rel(r);
 			putchar('\n');
 			free_rel(r);
 		}
-		putchar('\n');
+		if (*verbose) {
+			putchar('\n');
+		}
 		free_node($2); }
 	| prgm poly '\n' {
-		printf("AST: ");
-		print_node($2);
-		putchar('\n');
+		if (*verbose) {
+			printf("AST: ");
+			print_node($2);
+			putchar('\n');
+		}
 		TermNode *p;
 		if ((p = eval_poly($2, *env))) {
-			printf("VAL: ");
+			if (*verbose) {
+				printf("VAL: ");
+			}
 			print_poly(p);
 			putchar('\n');
 			free_poly(p);
 		}
-		putchar('\n');
+		if (*verbose) {
+			putchar('\n');
+		}
 		free_node($2); }
 	| prgm asgn '\n' {
-		printf("AST: ");
-		print_node($2);
-		putchar('\n');
+		if (*verbose) {
+			printf("AST: ");
+			print_node($2);
+			putchar('\n');
+		}
 		const char *name = $2->u.asgndat.left->u.name;
 		TermNode *p;
 		if ((p = eval_asgn($2, env))) {
-			printf("ASN: %s := ", name);
+			if (*verbose) {
+				printf("ASN: %s := ", name);
+			}
 			print_poly(p);
 			putchar('\n');
 		} else {
-			printf("Variable %s is already defined or "
+			fprintf(stderr, "Variable %s is already defined or "
 			       "self-referenced.\n",
 			       name);
 		}
-		putchar('\n');
+		if (*verbose) {
+			putchar('\n');
+		}
 		free_node($2); }
 	;
 asgn:	  VAR ASGN poly	{ $$ = asgn_node(var_node($1), $3); }
@@ -121,14 +140,31 @@ int main(int argc, char *argv[])
 {
 	progname = argv[0];
 
+	// Parse command line arguments.
+	bool verbose = true;
 	bool fin = false;
-	if (argc > 1) {
-		fin = true;
-		yyin = fopen(argv[1], "r");
+	size_t optidx;
+	for (optidx = 1; optidx < argc && argv[optidx][0] == '-'; ++optidx) {
+		switch (argv[optidx][1]) {
+		case 'q':
+			verbose = false;
+			break;
+		case 'v':
+			break;
+		default:
+			fprintf(stderr, "Usage: %s [-qv] [file] \n", progname);
+			exit(EXIT_FAILURE);
+		}
 	}
+	argv += optidx; // `argv` points to the remaining non-option arguments.
+	if (argv) {
+		fin = true;
+		yyin = fopen(*argv, "r");
+	}
+
 	/* test(); */
 	EnvFrame *env = NULL;
-	yyparse(&env);
+	yyparse(&env, &verbose);
 	free_env(env);
 
 	if (fin) {
@@ -137,9 +173,10 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-int yyerror(EnvFrame **env, const char *msg)
+int yyerror(EnvFrame **env, bool *verbose, const char *msg)
 {
 	(void)env;
+	(void)verbose;
 	fprintf(stderr, "%s: %s near line %d\n", progname, msg, lineno);
 	return 0;
 }
