@@ -11,7 +11,7 @@ INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CC := gcc
-CFLAGS := -O0 -Wall -Wextra -Wpedantic -std=c17
+CFLAGS := -O3 -Wall -Wextra -Wpedantic -std=c17
 CPPFLAGS := $(INC_FLAGS) -MMD -MP
 LDFLAGS := -ly -ll -lm
 
