@@ -1,5 +1,6 @@
 %code top {
 #include "term.h"
+#include <stdbool.h>
 #include <stdio.h>
 }
 
@@ -112,16 +113,27 @@ atom:	  INUM	{ $$ = inum_node($1); }
 
 char *progname;
 int lineno = 1;
+extern FILE *yyin;
 
 static void test(void);
 
 int main(int argc, char *argv[])
 {
 	progname = argv[0];
+
+	bool fin = false;
+	if (argc > 1) {
+		fin = true;
+		yyin = fopen(argv[1], "r");
+	}
 	/* test(); */
 	EnvFrame *env = NULL;
 	yyparse(&env);
 	free_env(env);
+
+	if (fin) {
+		fclose(yyin);
+	}
 	return 0;
 }
 

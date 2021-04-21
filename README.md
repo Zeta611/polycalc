@@ -89,6 +89,25 @@ AST: (* (* (* (* (* (* (* (* (* (* (* (* (* (* (* s o) r) t) t) h) e) s) e) l) e
 VAL: e^4 h l o r^2 s^3 t^4
 ```
 
+PolyCalc also accepts a file as an input.
+For example, consider a file named `input.poly` with the below content:
+```
+x := 3
+y := 2
+x + y
+```
+Invoking PolyCalc via `./build/poly input.poly` outputs:
+```
+AST: (:= x 3)
+ASN: x := 3 
+
+AST: (:= y 3)
+ASN: y := 3 
+
+AST: (+ x y)
+VAL: 6 
+```
+
 ## Building Source
 ```sh
 make
