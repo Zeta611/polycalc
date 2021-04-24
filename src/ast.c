@@ -10,7 +10,7 @@
 ASTNode *asgn_node(ASTNode *left, ASTNode *right)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){ASGN_NODE, .u.asgndat = {left, right}, .next = NULL};
+	*node = (ASTNode){ASGN_NODE, .u.asgndat = {left, right}};
 	return node;
 }
 
@@ -18,8 +18,7 @@ ASTNode *asgn_node(ASTNode *left, ASTNode *right)
 ASTNode *rel_node(Rel rel, ASTNode *left, ASTNode *right)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node =
-	    (ASTNode){REL_NODE, .u.reldat = {rel, left, right}, .next = NULL};
+	*node = (ASTNode){REL_NODE, .u.reldat = {rel, left, right}};
 	return node;
 }
 
@@ -27,7 +26,7 @@ ASTNode *rel_node(Rel rel, ASTNode *left, ASTNode *right)
 ASTNode *op_node(Op op, ASTNode *left, ASTNode *right)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){OP_NODE, .u.opdat = {op, left, right}, .next = NULL};
+	*node = (ASTNode){OP_NODE, .u.opdat = {op, left, right}};
 	return node;
 }
 
@@ -35,7 +34,7 @@ ASTNode *op_node(Op op, ASTNode *left, ASTNode *right)
 ASTNode *inum_node(long val)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){INUM_NODE, .u.ival = val, .next = NULL};
+	*node = (ASTNode){INUM_NODE, .u.ival = val};
 	return node;
 }
 
@@ -43,7 +42,7 @@ ASTNode *inum_node(long val)
 ASTNode *rnum_node(double val)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){RNUM_NODE, .u.rval = val, .next = NULL};
+	*node = (ASTNode){RNUM_NODE, .u.rval = val};
 	return node;
 }
 
@@ -51,7 +50,7 @@ ASTNode *rnum_node(double val)
 ASTNode *var_node(char *name)
 {
 	ASTNode *node = malloc(sizeof *node);
-	*node = (ASTNode){VAR_NODE, .u.name = name, .next = NULL};
+	*node = (ASTNode){VAR_NODE, .u.name = name};
 	return node;
 }
 
