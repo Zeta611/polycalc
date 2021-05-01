@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 	// Parse command line arguments.
 	bool verbose = true;
 	bool fin = false;
-	size_t optidx;
+	int optidx;
 	for (optidx = 1; optidx < argc && argv[optidx][0] == '-'; ++optidx) {
 		switch (argv[optidx][1]) {
 		case 'q':
