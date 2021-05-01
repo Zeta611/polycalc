@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	argv += optidx; // `argv` points to the remaining non-option arguments.
-	if (argv) {
+	if (*argv) {
 		fin = true;
 		yyin = fopen(*argv, "r");
 	}
