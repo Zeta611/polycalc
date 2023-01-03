@@ -11,7 +11,7 @@ INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CC := gcc
-CFLAGS := -O3 -Wall -Wextra -Wpedantic -std=c17
+CFLAGS := -O3 -Wall -Wextra -Wpedantic -std=c17 -Wno-implicit-function-declaration
 CPPFLAGS := $(INC_FLAGS) -MMD -MP
 LDFLAGS := -ly -ll -lm
 
@@ -34,6 +34,7 @@ $(BUILD_DIR)/%.c.o: %.c
 
 %.l.o: %.yy.c
 	mkdir -p $(dir $@)
+	$(YACC) $(YFLAGS) $(SRC_DIRS)/poly.y -o $(BUILD_DIR)/src/poly.tab.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.tab.c: %.y
